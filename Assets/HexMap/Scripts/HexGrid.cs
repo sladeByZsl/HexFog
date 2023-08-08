@@ -35,7 +35,7 @@ public class HexGrid : MonoBehaviour {
 	}
 
 	void Update () {
-		if (Input.GetMouseButton(0)) {
+		if (Input.GetMouseButtonDown(0)) {
 			HandleInput();
 		}
 	}
@@ -56,7 +56,7 @@ public class HexGrid : MonoBehaviour {
 		HexCell cell = cells[index];
 		cell.color = touchedColor;
 		
-		Debug.LogError($"position:{cell.transform.position},index:{index},cor:{coordinates.ToString()}");
+		Debug.Log($"position:{cell.transform.position},index:{index},cor:{coordinates.ToString()}");
 		hexMesh.Triangulate(cells);
 	}
 
