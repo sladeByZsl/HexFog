@@ -288,11 +288,11 @@ MonoBehaviour:
   fogRTSize: {x: 256, y: 256}
   planeRender: {fileID: 86110799}
   disovleTime: 0.1
-  viewTransform: {x: 0, y: 20, z: 0}
-  fogWidth: 100
-  fogHeight: 100
+  viewTransform: {x: 48, y: 20, z: 54}
+  fogWidth: 150
+  fogHeight: 150
   m_visiblaRange: {x: 0, y: 0}
-  m_hexSize: 12
+  m_hexSize: 20
   StopdrawHexAsync: 0
 --- !u!1001 &86110798
 PrefabInstance:
@@ -316,15 +316,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2104038326487004332, guid: eef282f2377e1b845b1be297e70d60f3, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 48
       objectReference: {fileID: 0}
     - target: {fileID: 2104038326487004332, guid: eef282f2377e1b845b1be297e70d60f3, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 2104038326487004332, guid: eef282f2377e1b845b1be297e70d60f3, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 54
       objectReference: {fileID: 0}
     - target: {fileID: 2104038326487004332, guid: eef282f2377e1b845b1be297e70d60f3, type: 3}
       propertyPath: m_LocalRotation.w

@@ -25,7 +25,7 @@ public class TestHexFog : MonoBehaviour
 
     #region 视野矩阵
 
-    public Vector3 viewTransform = new Vector3(0, 20, 0);
+    private Vector3 viewTransform = new Vector3(0, 20, 0);
     private static readonly Quaternion viewQuaternion = Quaternion.Euler(90, 0, 0);
     private static readonly Vector3 viewScale = new Vector3(1, 1, -1);
 
@@ -122,8 +122,7 @@ public class TestHexFog : MonoBehaviour
             Debug.LogError("fog rt is null");
             return;
         }
-        m_viewMatrix = Matrix4x4.TRS(viewTransform, viewQuaternion, viewScale);
-
+        SetViewMatrix();
         var matrixArray = Convert2Matrix(positions);
         float dissolve = 1;
         if (open)
@@ -153,8 +152,15 @@ public class TestHexFog : MonoBehaviour
 
     public void DrawHexAync2(Vector3[] positions, float[] maskdirection, bool open)
     {
-        m_viewMatrix = Matrix4x4.TRS(viewTransform, viewQuaternion, viewScale);
+        SetViewMatrix();
         StartCoroutine(DrawHexAsync(positions, maskdirection,open));
+    }
+
+    private void SetViewMatrix()
+    {
+        viewTransform = planeRender.transform.position;
+        viewTransform.y += 10;
+        m_viewMatrix = Matrix4x4.TRS(viewTransform, viewQuaternion, viewScale);
     }
 
     IEnumerator DrawHexAsync(Vector3[] positions, float[] maskdirection,bool open)
