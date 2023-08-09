@@ -17,6 +17,9 @@ public class TestHexFog : MonoBehaviour
 
     [Header("地表")] public Renderer planeRender;
 
+    [Header("迷雾溶解时间")] public float disovleTime = 0.1f;
+    
+    
     //地表shader参数
     private static readonly int baseMap = Shader.PropertyToID("_BaseMap");
 
@@ -58,19 +61,20 @@ public class TestHexFog : MonoBehaviour
 
     private Vector3[] hexPos = new Vector3[]
     {
-        new Vector3(17.32f, 0.00f, 30.00f),
-        new Vector3(34.64f, 0.00f, 30.00f),
-        new Vector3(51.96f, 0.0f, 30.00f),
-        new Vector3(69.28f, 0.00f, 30.00f),
-        new Vector3(69.28f, 0.00f, 0.00f),
-
-
-        new Vector3(86.60f, 0.00f, 0.00f),
-        new Vector3(8.66f, 0.00f, 75.00f),
-        new Vector3(25.98f, 0.00f, 75.00f),
-        new Vector3(34.64f, 0.00f, 60.00f),
-        new Vector3(25.98f, 0.00f, 45.00f),
-        new Vector3(43.30f, 0.00f, 45.00f),
+        new Vector3(0,0,0)
+        // new Vector3(17.32f, 0.00f, 30.00f),
+        // new Vector3(34.64f, 0.00f, 30.00f),
+        // new Vector3(51.96f, 0.0f, 30.00f),
+        // new Vector3(69.28f, 0.00f, 30.00f),
+        // new Vector3(69.28f, 0.00f, 0.00f),
+        //
+        //
+        // new Vector3(86.60f, 0.00f, 0.00f),
+        // new Vector3(8.66f, 0.00f, 75.00f),
+        // new Vector3(25.98f, 0.00f, 75.00f),
+        // new Vector3(34.64f, 0.00f, 60.00f),
+        // new Vector3(25.98f, 0.00f, 45.00f),
+        // new Vector3(43.30f, 0.00f, 45.00f),
     };
 
     void Start()
@@ -87,7 +91,7 @@ public class TestHexFog : MonoBehaviour
 
         planeRender.sharedMaterial.SetTexture(baseMap, fogRT);
         m_cbuffer.name = HexFogCbufferName;
-        m_viewMatrix = Matrix4x4.TRS(viewTransform, viewQuaternion, viewScale);
+       
 
         viewRight = fogWidth * .5f;
         viewLeft = -viewRight;
@@ -111,13 +115,14 @@ public class TestHexFog : MonoBehaviour
         return null;
     }
 
-    private void DrawHexImmediately(Vector3[] positions, bool open)
+    public void DrawHexImmediately(Vector3[] positions, bool open)
     {
         if (fogRT == null)
         {
             Debug.LogError("fog rt is null");
             return;
         }
+        m_viewMatrix = Matrix4x4.TRS(viewTransform, viewQuaternion, viewScale);
 
         var matrixArray = Convert2Matrix(positions);
         float dissolve = 1;
@@ -148,6 +153,7 @@ public class TestHexFog : MonoBehaviour
 
     public void DrawHexAync2(Vector3[] positions, float[] maskdirection, bool open)
     {
+        m_viewMatrix = Matrix4x4.TRS(viewTransform, viewQuaternion, viewScale);
         StartCoroutine(DrawHexAsync(positions, maskdirection,open));
     }
 
@@ -202,8 +208,8 @@ public class TestHexFog : MonoBehaviour
                     yield break;
                 }
                 dissolve += 0.1f;
-                Debug.LogError(dissolve);
-                yield return new WaitForSeconds(1f);
+                //Debug.LogError(dissolve);
+                yield return new WaitForSeconds(disovleTime);
             }
         }
         else
@@ -231,8 +237,8 @@ public class TestHexFog : MonoBehaviour
                     yield break;
                 }
                 dissolve -= 0.1f;
-                Debug.LogError(dissolve);
-                yield return new WaitForSeconds(1f);
+                //Debug.LogError(dissolve);
+                yield return new WaitForSeconds(disovleTime);
             }
         }
     }

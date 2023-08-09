@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class HexGrid : MonoBehaviour {
@@ -16,6 +17,8 @@ public class HexGrid : MonoBehaviour {
 
 	Canvas gridCanvas;
 	HexMesh hexMesh;
+
+	public TestHexFog TestHexFog;
 
 	void Awake () {
 		gridCanvas = GetComponentInChildren<Canvas>();
@@ -36,26 +39,45 @@ public class HexGrid : MonoBehaviour {
 
 	void Update () {
 		if (Input.GetMouseButtonDown(0)) {
-			HandleInput();
+			Debug.LogError("开启迷雾");
+			Vector3 cellPos = Vector3.zero;
+			float dir = 3.14f;
+			HandleInput(true,out cellPos);
+			List<Vector3> cellPosList = new List<Vector3>(){cellPos};
+			List<float> dirList = new List<float>() { dir};
+			TestHexFog.DrawHexAync2(cellPosList.ToArray(),dirList.ToArray(),false);
+		}
+		if (Input.GetMouseButtonDown(1)) {
+			//关闭
+			Debug.LogError("关闭迷雾");
+			Vector3 cellPos = Vector3.zero;
+			float dir = 3.14f;
+			HandleInput(false,out cellPos);
+			List<Vector3> cellPosList = new List<Vector3>(){cellPos};
+			List<float> dirList = new List<float>() { dir};
+			TestHexFog.DrawHexAync2(cellPosList.ToArray(),dirList.ToArray(),true);
 		}
 	}
 
-	void HandleInput () {
+	void HandleInput (bool select,out Vector3 cellPos) {
+		cellPos = Vector3.zero;
 		Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
 		RaycastHit hit;
 		if (Physics.Raycast(inputRay, out hit)) {
-			TouchCell(hit.point);
+			TouchCell(hit.point,select,out cellPos);
 		}
 	}
 
-	void TouchCell (Vector3 position) {
+	void TouchCell (Vector3 position,bool select,out Vector3 cellPos) {
+		cellPos = Vector3.zero;
 		position = transform.InverseTransformPoint(position);
 	
 		HexCoordinates coordinates = HexCoordinates.FromPosition(position);
 		int index = coordinates.X + coordinates.Z * width + coordinates.Z / 2;
 		HexCell cell = cells[index];
-		cell.color = touchedColor;
-		
+		cell.color = select ? touchedColor : defaultColor;
+
+		cellPos = cell.transform.position;
 		Debug.Log($"position:{cell.transform.position},index:{index},cor:{coordinates.ToString()}");
 		hexMesh.Triangulate(cells);
 	}
