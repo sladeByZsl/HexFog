@@ -146,12 +146,12 @@ public class TestHexFog : MonoBehaviour
 
     public bool StopdrawHexAsync;
 
-    public void DrawHexAync2(Vector3[] positions, float[] maskdirection, bool clear = false)
+    public void DrawHexAync2(Vector3[] positions, float[] maskdirection, bool open)
     {
-        StartCoroutine(DrawHexAsync(positions, maskdirection));
+        StartCoroutine(DrawHexAsync(positions, maskdirection,open));
     }
 
-    IEnumerator DrawHexAsync(Vector3[] positions, float[] maskdirection)
+    IEnumerator DrawHexAsync(Vector3[] positions, float[] maskdirection,bool open)
     {
         if (fogRT == null)
         {
@@ -160,7 +160,13 @@ public class TestHexFog : MonoBehaviour
         }
 
         var matrices = Convert2Matrix(positions);
-        var _Dissolve = 0f;
+
+        var dissolve = 1.0f;
+        if (open)
+        {
+            dissolve = 0f;
+        }
+       
         var stop = false;
         var buffer = new float[matrices.Length];
         var colorbuffer = new Vector4[matrices.Length];
@@ -171,31 +177,63 @@ public class TestHexFog : MonoBehaviour
 
         m_propertyBlock.Clear();
 
-        while (_Dissolve < 1.1)
+        if (open)
         {
-            if (StopdrawHexAsync)
+            while (dissolve < 1.1)
             {
-                _Dissolve = 1f;
-                stop = true;
-            }
+                if (StopdrawHexAsync)
+                {
+                    dissolve = 1f;
+                    stop = true;
+                }
 
-            for (int i = 0; i < buffer.Length; i++)
+                for (int i = 0; i < buffer.Length; i++)
+                {
+                    buffer[i] = dissolve;
+                    colorbuffer[i] = Color.green;
+                }
+
+                m_propertyBlock.SetFloatArray("_Dissolve", buffer);
+                m_propertyBlock.SetVectorArray("_BaseColor", colorbuffer);
+
+                DrawHexMesh(matrices, true, m_propertyBlock);
+                if (stop)
+                {
+                    yield break;
+                }
+                dissolve += 0.1f;
+                Debug.LogError(dissolve);
+                yield return new WaitForSeconds(1f);
+            }
+        }
+        else
+        {
+            while (dissolve >0)
             {
-                buffer[i] = _Dissolve;
-                colorbuffer[i] = Color.green;
-            }
+                if (StopdrawHexAsync)
+                {
+                    dissolve = 0.0f;
+                    stop = true;
+                }
 
-            m_propertyBlock.SetFloatArray("_Dissolve", buffer);
-            m_propertyBlock.SetVectorArray("_BaseColor", colorbuffer);
+                for (int i = 0; i < buffer.Length; i++)
+                {
+                    buffer[i] = dissolve;
+                    colorbuffer[i] = Color.green;
+                }
 
-            DrawHexMesh(matrices, true, m_propertyBlock);
-            if (stop)
-            {
-                yield break;
+                m_propertyBlock.SetFloatArray("_Dissolve", buffer);
+                m_propertyBlock.SetVectorArray("_BaseColor", colorbuffer);
+
+                DrawHexMesh(matrices, true, m_propertyBlock);
+                if (stop)
+                {
+                    yield break;
+                }
+                dissolve -= 0.1f;
+                Debug.LogError(dissolve);
+                yield return new WaitForSeconds(1f);
             }
-            _Dissolve += 0.1f;
-            Debug.LogError(_Dissolve);
-            yield return new WaitForSeconds(1f);
         }
     }
 
@@ -232,7 +270,7 @@ public class TestHexFog : MonoBehaviour
             DrawHexImmediately(hexPos,true);
         }
 
-        if (GUI.Button(new Rect(130, 10, 120, 80), "Immediately"))
+        if (GUI.Button(new Rect(130, 10, 120, 80), "渐变开启迷雾"))
         {
             List<float> dir = new List<float>();
             for (int i = 0; i < hexPos.Length; i++)
@@ -240,7 +278,18 @@ public class TestHexFog : MonoBehaviour
                 dir.Add(3.14f);
             }
 
-            DrawHexAync2(hexPos, dir.ToArray());
+            DrawHexAync2(hexPos, dir.ToArray(),false);
+        }
+        
+        if (GUI.Button(new Rect(250, 10, 120, 80), "渐变结束迷雾"))
+        {
+            List<float> dir = new List<float>();
+            for (int i = 0; i < hexPos.Length; i++)
+            {
+                dir.Add(3.14f);
+            }
+
+            DrawHexAync2(hexPos, dir.ToArray(),true);
         }
     }
 }
