@@ -111,7 +111,7 @@ public class TestHexFog : MonoBehaviour
         return null;
     }
 
-    private void DrawHexImmediately(Vector3[] positions)
+    private void DrawHexImmediately(Vector3[] positions, bool open)
     {
         if (fogRT == null)
         {
@@ -120,7 +120,26 @@ public class TestHexFog : MonoBehaviour
         }
 
         var matrixArray = Convert2Matrix(positions);
-        DrawHexMesh(matrixArray, true);
+        float dissolve = 1;
+        if (open)
+        {
+            dissolve = 0;
+        }
+
+        if (m_propertyBlock == null)
+        {
+            m_propertyBlock = new MaterialPropertyBlock();
+            m_propertyBlock.Clear();
+        }
+
+        var buffer = new float[matrixArray.Length];
+        for (int i = 0; i < matrixArray.Length; i++)
+        {
+            buffer[i] = dissolve;
+        }
+
+        m_propertyBlock.SetFloatArray("_Dissolve", buffer);
+        DrawHexMesh(matrixArray, true, m_propertyBlock);
     }
 
     #region 渐变效果
@@ -174,7 +193,6 @@ public class TestHexFog : MonoBehaviour
             {
                 yield break;
             }
-
             _Dissolve += 0.1f;
             Debug.LogError(_Dissolve);
             yield return new WaitForSeconds(1f);
@@ -200,6 +218,7 @@ public class TestHexFog : MonoBehaviour
         {
             m_cbuffer.DrawMeshInstanced(hexMesh, 0, fogMaterial, 0, matrices, matrices.Length);
         }
+
         Graphics.ExecuteCommandBuffer(m_cbuffer);
         m_cbuffer.Clear();
     }
@@ -210,7 +229,7 @@ public class TestHexFog : MonoBehaviour
         {
             //Debug.LogError(m_cam.worldToCameraMatrix);
             Debug.LogError(m_viewMatrix.inverse);
-            DrawHexImmediately(hexPos);
+            DrawHexImmediately(hexPos,true);
         }
 
         if (GUI.Button(new Rect(130, 10, 120, 80), "Immediately"))
