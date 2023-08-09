@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using Elex.HexFog;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class HexGrid : MonoBehaviour {
@@ -18,7 +20,7 @@ public class HexGrid : MonoBehaviour {
 	Canvas gridCanvas;
 	HexMesh hexMesh;
 
-	public TestHexFog TestHexFog;
+	[FormerlySerializedAs("TestHexFog")] public HexFogView hexFogView;
 
 	void Awake () {
 		gridCanvas = GetComponentInChildren<Canvas>();
@@ -45,7 +47,7 @@ public class HexGrid : MonoBehaviour {
 			HandleInput(true,out cellPos);
 			List<Vector3> cellPosList = new List<Vector3>(){cellPos};
 			List<float> dirList = new List<float>() { dir};
-			TestHexFog.DrawHexAync2(cellPosList.ToArray(),dirList.ToArray(),false);
+			hexFogView.StartDrawHexFogAsync(cellPosList.ToArray(),dirList.ToArray(),false);
 		}
 		if (Input.GetMouseButtonDown(1)) {
 			//关闭
@@ -55,9 +57,44 @@ public class HexGrid : MonoBehaviour {
 			HandleInput(false,out cellPos);
 			List<Vector3> cellPosList = new List<Vector3>(){cellPos};
 			List<float> dirList = new List<float>() { dir};
-			TestHexFog.DrawHexAync2(cellPosList.ToArray(),dirList.ToArray(),true);
+			hexFogView.StartDrawHexFogAsync(cellPosList.ToArray(),dirList.ToArray(),true);
 		}
 	}
+	
+	/*
+	 * private void OnGUI()
+    {
+        if (GUI.Button(new Rect(10, 10, 120, 80), "Blit"))
+        {
+            //Debug.LogError(m_cam.worldToCameraMatrix);
+            Debug.LogError(m_viewMatrix.inverse);
+            DrawHexImmediately(hexPos,true);
+        }
+
+        if (GUI.Button(new Rect(130, 10, 120, 80), "渐变开启迷雾"))
+        {
+            List<float> dir = new List<float>();
+            for (int i = 0; i < hexPos.Length; i++)
+            {
+                dir.Add(3.14f);
+            }
+
+            DrawHexAync2(hexPos, dir.ToArray(),false);
+        }
+        
+        if (GUI.Button(new Rect(250, 10, 120, 80), "渐变结束迷雾"))
+        {
+            List<float> dir = new List<float>();
+            for (int i = 0; i < hexPos.Length; i++)
+            {
+                dir.Add(3.14f);
+            }
+
+            DrawHexAync2(hexPos, dir.ToArray(),true);
+        }
+    }
+	 * 
+	 */
 
 	void HandleInput (bool select,out Vector3 cellPos) {
 		cellPos = Vector3.zero;
