@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Elex.HexFog;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -40,27 +41,54 @@ public class HexGrid : MonoBehaviour {
 	}
 
 	void Update () {
+		return;
 		if (Input.GetMouseButtonDown(0)) {
+			//开启
 			Debug.LogError("开启迷雾");
-			Vector3 cellPos = Vector3.zero;
-			float dir = 3.14f;
-			HandleInput(true,out cellPos);
-			List<Vector3> cellPosList = new List<Vector3>(){cellPos};
-			List<float> dirList = new List<float>() { dir};
-			hexFogView.StartDrawHexFogAsync(cellPosList.ToArray(),dirList.ToArray(),false);
+			HandleInput(true);
 		}
 		if (Input.GetMouseButtonDown(1)) {
 			//关闭
 			Debug.LogError("关闭迷雾");
-			Vector3 cellPos = Vector3.zero;
-			float dir = 3.14f;
-			HandleInput(false,out cellPos);
-			List<Vector3> cellPosList = new List<Vector3>(){cellPos};
-			List<float> dirList = new List<float>() { dir};
-			hexFogView.StartDrawHexFogAsync(cellPosList.ToArray(),dirList.ToArray(),true);
+			HandleInput(false);
 		}
 	}
-	
+
+	private void OnGUI()
+	{
+		/*
+		 *  new Vector3(51.96f, 0, 0),
+            new Vector3(43.30f, 0, 15.00f),
+            new Vector3(60.62f,0,15.00f),
+            new Vector3(34.64f,0,30.00f),
+            new Vector3(51.96f,0,30.00f),
+            new Vector3(69.28f,0,30.00f),
+		 */
+		if (GUI.Button(new Rect(10, 10, 120, 80), "立即绘制区域"))
+		{
+			HexFogParam hexFogParam = new HexFogParam();
+
+			List<Vector3> zeroLayer = new List<Vector3>();
+			zeroLayer.Add(new Vector3(51.96f, 0, 0));
+
+			List<Vector3> oneLayer = new List<Vector3>();
+			oneLayer.Add( new Vector3(43.30f, 0, 15.00f));
+			oneLayer.Add( new Vector3(60.62f,0,15.00f));
+			
+			List<Vector3> twoLayer = new List<Vector3>();
+			twoLayer.Add(new Vector3(34.64f,0,30.00f));
+			twoLayer.Add(new Vector3(51.96f,0,30.00f));
+			twoLayer.Add(new Vector3(69.28f,0,30.00f));
+
+			hexFogParam.FogLayer = new Dictionary<int, List<Vector3>>();
+			hexFogParam.FogLayer.Add(0,zeroLayer);
+			hexFogParam.FogLayer.Add(1,oneLayer);
+			hexFogParam.FogLayer.Add(2,twoLayer);
+			
+			hexFogView.DrawHexFogImmediately(hexFogParam,true);
+		}
+	}
+
 	/*
 	 * private void OnGUI()
     {
@@ -96,12 +124,16 @@ public class HexGrid : MonoBehaviour {
 	 * 
 	 */
 
-	void HandleInput (bool select,out Vector3 cellPos) {
-		cellPos = Vector3.zero;
+	void HandleInput (bool select) {
+		Vector3 cellPos = Vector3.zero;
 		Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
 		RaycastHit hit;
+		float dir = 3.14f;
 		if (Physics.Raycast(inputRay, out hit)) {
 			TouchCell(hit.point,select,out cellPos);
+			List<Vector3> cellPosList = new List<Vector3>(){cellPos};
+			List<float> dirList = new List<float>() { dir};
+			hexFogView.StartDrawHexFogAsync(cellPosList.ToArray(),dirList.ToArray(),select);
 		}
 	}
 

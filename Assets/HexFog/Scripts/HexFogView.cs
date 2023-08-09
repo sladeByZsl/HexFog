@@ -6,6 +6,11 @@ using UnityEngine.Rendering;
 
 namespace Elex.HexFog
 {
+    public class HexFogParam
+    {
+        public Dictionary<int, List<Vector3>> FogLayer=new Dictionary<int, List<Vector3>>();
+    }
+    
     public class HexFogView : MonoBehaviour
     {
         [Header("六边形遮罩的mesh")] public Mesh hexMesh;
@@ -56,7 +61,12 @@ namespace Elex.HexFog
 
         private Vector3[] hexPos = new Vector3[]
         {
-            new Vector3(0, 0, 0)
+            new Vector3(51.96f, 0, 0),
+            new Vector3(43.30f, 0, 15.00f),
+            new Vector3(60.62f,0,15.00f),
+            new Vector3(34.64f,0,30.00f),
+            new Vector3(51.96f,0,30.00f),
+            new Vector3(69.28f,0,30.00f),
             // new Vector3(17.32f, 0.00f, 30.00f),
             // new Vector3(34.64f, 0.00f, 30.00f),
             // new Vector3(51.96f, 0.0f, 30.00f),
@@ -112,7 +122,8 @@ namespace Elex.HexFog
 
         #region 立刻绘制
 
-        public void DrawHexFogImmediately(Vector3[] positions, bool open)
+        
+        public void DrawHexFogImmediately(HexFogParam hexFogParam, bool open)
         {
             if (fogRT == null)
             {
@@ -121,11 +132,26 @@ namespace Elex.HexFog
             }
 
             SetViewMatrix();
-            var matrixArray = Convert2Matrix(positions);
-            float dissolve = 1;
-            if (open)
+
+            float dissolve = open ? 0 : 1;
+
+            List<Matrix4x4> matrixList = new List<Matrix4x4>();
+            List<float> dissolveList = new List<float>();
+            List<Vector4> colorList = new List<Vector4>();
+
+            foreach (var layer in hexFogParam.FogLayer)
             {
-                dissolve = 0;
+                var positions = layer.Value.ToArray();
+                var matrices = Convert2Matrix(positions);
+                var color = GetColorForKey(layer.Key);
+
+                matrixList.AddRange(matrices);
+                
+                for (int i = 0; i < matrices.Length; i++)
+                {
+                    dissolveList.Add(dissolve);
+                    colorList.Add((Vector4)color);
+                }
             }
 
             if (m_propertyBlock == null)
@@ -134,14 +160,23 @@ namespace Elex.HexFog
                 m_propertyBlock.Clear();
             }
 
-            var buffer = new float[matrixArray.Length];
-            for (int i = 0; i < matrixArray.Length; i++)
+            m_propertyBlock.SetFloatArray("_Dissolve", dissolveList.ToArray());
+            m_propertyBlock.SetVectorArray("_BaseColor", colorList.ToArray());
+            DrawHexMesh(matrixList.ToArray(), true, m_propertyBlock);
+        }
+        
+        private Color GetColorForKey(int key)
+        {
+            // You can define a mapping of keys to colors here
+            // For example:
+            switch (key)
             {
-                buffer[i] = dissolve;
+                case 0: return Color.red;
+                case 1: return Color.green;
+                case 2: return Color.blue;
+                // Add more cases as needed
+                default: return Color.white; // Default color
             }
-
-            m_propertyBlock.SetFloatArray("_Dissolve", buffer);
-            DrawHexMesh(matrixArray, true, m_propertyBlock);
         }
 
         #endregion
@@ -227,12 +262,7 @@ namespace Elex.HexFog
                 colorbuffer[i] = color;
             }
         }
-
-        public void StopAllFog()
-        {
-
-        }
-
+        
         #endregion
 
         #region 工具

@@ -288,12 +288,11 @@ MonoBehaviour:
   fogRTSize: {x: 256, y: 256}
   planeRender: {fileID: 86110799}
   disovleTime: 0.1
-  viewTransform: {x: 48, y: 20, z: 54}
+  logEnable: 1
   fogWidth: 150
   fogHeight: 150
   m_visiblaRange: {x: 0, y: 0}
   m_hexSize: 20
-  StopdrawHexAsync: 0
 --- !u!1001 &86110798
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -352,6 +351,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2104038326487004332, guid: eef282f2377e1b845b1be297e70d60f3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3912090396038814570, guid: eef282f2377e1b845b1be297e70d60f3, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5094375890270311976, guid: eef282f2377e1b845b1be297e70d60f3, type: 3}
@@ -583,7 +586,7 @@ MonoBehaviour:
   touchedColor: {r: 1, g: 0, b: 1, a: 1}
   cellPrefab: {fileID: 11422220, guid: 94c2312396697489abc866a188f80152, type: 3}
   cellLabelPrefab: {fileID: 11470134, guid: f68794ca03b6f4510b9a5bd6ee9ba2f4, type: 3}
-  TestHexFog: {fileID: 68505630}
+  hexFogView: {fileID: 68505630}
 --- !u!4 &1571186512
 Transform:
   m_ObjectHideFlags: 0
