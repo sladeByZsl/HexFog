@@ -1,4 +1,4 @@
-Shader "Unlit/sea"
+Shader "hexmesh"
 {
     Properties
     {
@@ -23,7 +23,7 @@ Shader "Unlit/sea"
         }
         LOD 100
         zwrite off
-        // blend srcalpha oneminussrcalpha
+        blend srcalpha oneminussrcalpha
         Pass
         {
             HLSLPROGRAM
@@ -40,23 +40,29 @@ Shader "Unlit/sea"
             {
                 float4 positionOS : POSITION;
                 float2 uv : TEXCOORD0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct v2f
             {
                 float4 uv : TEXCOORD0;
                 float4 positionCS : SV_POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
 
             CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
             float4 _DissolveMap_ST;
-            half4 _BaseColor;
+            float4 _BaseColor;
             float _Dissolve;
             float _Direction;
             float _MaskUVScale;
+
             CBUFFER_END
+
+
+            VECTOR _HexColor;
 
             #ifdef UNITY_DOTS_INSTANCING_ENABLED
                 UNITY_DOTS_INSTANCING_START(MaterialPropertyMetadata)
@@ -65,12 +71,15 @@ Shader "Unlit/sea"
                     UNITY_DOTS_INSTANCED_PROP(float , _Dissolve)
                     UNITY_DOTS_INSTANCED_PROP(float , _Direction)
             
+            
+            
                 UNITY_DOTS_INSTANCING_END(MaterialPropertyMetadata)
 
                 #define _BaseColor          UNITY_ACCESS_DOTS_INSTANCED_PROP_FROM_MACRO(float4 , Metadata_BaseColor)
                 #define _Cutoff             UNITY_ACCESS_DOTS_INSTANCED_PROP_FROM_MACRO(float  , Metadata_Cutoff)
                 #define _Dissolve            UNITY_ACCESS_DOTS_INSTANCED_PROP_FROM_MACRO(float  , Metadata_Dissolve)
                 #define _Direction            UNITY_ACCESS_DOTS_INSTANCED_PROP_FROM_MACRO(float  , Metadata_Direction)
+                #define _HexColor            UNITY_ACCESS_DOTS_INSTANCED_PROP_FROM_MACRO(VECTOR  , Metadata_HexColor)
             #endif
 
 
@@ -99,20 +108,19 @@ Shader "Unlit/sea"
                 return output;
             }
 
-            float frag(v2f i) : SV_Target
+            float4 frag(v2f input) : SV_Target
             {
-                half4 mask = SAMPLE_TEXTURE2D(_DissolveMap, sampler_DissolveMap, i.uv.zw);
-                half4 col = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv.xy);
-                float2 uv = i.uv - 0.5;
+                UNITY_SETUP_INSTANCE_ID(input);
+                half4 mask = SAMPLE_TEXTURE2D(_DissolveMap, sampler_DissolveMap, input.uv.zw);
+                //half4 col = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv.xy);
+                float2 uv = input.uv.xy - 0.5f;
                 uv = float2(uv.x * cos(_Direction) - uv.y * sin(_Direction), uv.x * sin(_Direction) + uv.y * cos(_Direction));
-                //uv *= _MaskUVScale;
                 uv += 0.5;
-                float directionMask = SAMPLE_TEXTURE2D(_DirectionMap, sampler_DirectionMap, uv).r + .5 - mask.r - (_Dissolve * 1.5);
-                float alpha = 1 * directionMask;
+                float directionMask = SAMPLE_TEXTURE2D(_DirectionMap, sampler_DirectionMap, uv).r + .5;
+                float alpha = 1 * directionMask - mask.r - (_Dissolve * 1.5);
                 alpha = step(.2, alpha);
-                col.a = saturate(alpha);
-                // uv=saturate(i.uv-0.5);
-                return  SAMPLE_TEXTURE2D(_DirectionMap, sampler_DirectionMap,  i.uv).b;
+                _BaseColor.a = alpha; // saturate(alpha);
+                return _BaseColor;
             }
             ENDHLSL
         }
