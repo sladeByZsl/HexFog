@@ -128,7 +128,8 @@ Shader "hexmesh"
                 alpha = step(.2, alpha);
 
                 float4 baseColor = UNITY_ACCESS_INSTANCED_PROP(Props, _BaseColor);
-                baseColor.a = alpha;
+             //   baseColor.a = alpha;
+                baseColor.a *=1-dissolve;
                 return baseColor;
                 
                 //_BaseColor.a = alpha; // saturate(alpha);
