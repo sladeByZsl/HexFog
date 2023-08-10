@@ -111,7 +111,7 @@ namespace Elex.HexFog
                 Matrix4x4[] mx = new Matrix4x4[positions.Length];
                 for (int i = 0; i < positions.Length; i++)
                 {
-                    mx[i] = Matrix4x4.TRS(positions[i], Quaternion.identity, Vector3.one * m_hexSize);
+                    mx[i] = Matrix4x4.TRS(positions[i], Quaternion.Euler(0,-90,0), Vector3.one * m_hexSize);
                 }
 
                 return mx;
@@ -162,7 +162,7 @@ namespace Elex.HexFog
 
             m_propertyBlock.SetFloatArray("_Dissolve", dissolveList.ToArray());
             m_propertyBlock.SetVectorArray("_BaseColor", colorList.ToArray());
-            DrawHexMesh(matrixList.ToArray(), true, m_propertyBlock);
+            DrawHexMesh(matrixList.ToArray(), false, m_propertyBlock);
         }
         
         private Color GetColorForKey(int key)
