@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -9,6 +10,8 @@ namespace Elex.HexFog
     public class HexFogParam
     {
         public Dictionary<int, List<Vector3>> FogLayer = new Dictionary<int, List<Vector3>>();
+        public List<List<Vector3>> FogData=new List<List<Vector3>>();
+        public List<List<float>> FogDir=new List<List<float>>();
     }
 
     public class HexFogView : MonoBehaviour
@@ -187,6 +190,19 @@ namespace Elex.HexFog
         #endregion
 
         #region 渐变绘制
+        
+        public async UniTask StartDrawHexFogAsync(HexFogParam hexFogParam, bool open)
+        {
+            SetViewMatrix();
+            for (int i = 0; i < hexFogParam.FogData.Count; i++)
+            {
+                List<Vector3> posList = hexFogParam.FogData[i];
+                List<float> dirList = hexFogParam.FogDir[i];
+                StartDrawHexFogAsync(posList.ToArray(),dirList.ToArray(),open);
+                await UniTask.Delay(TimeSpan.FromSeconds(1), ignoreTimeScale: false); 
+            }
+        }
+        
 
         private List<CoroutineHandler> runningCoroutines = new List<CoroutineHandler>();
         private bool StopdrawHexAsync;
@@ -293,7 +309,7 @@ namespace Elex.HexFog
             Graphics.SetRenderTarget(fogRT);
             if (clear)
             {
-                m_cbuffer.ClearRenderTarget(true, true, FogColor2);
+                //m_cbuffer.ClearRenderTarget(true, true, FogColor2);
             }
 
             m_cbuffer.SetViewProjectionMatrices(m_viewMatrix.inverse,
@@ -308,7 +324,7 @@ namespace Elex.HexFog
                 m_cbuffer.DrawMeshInstanced(hexMesh, 0, fogMaterial, 0, matrices, matrices.Length);
             }
 
-            FogBlur(m_cbuffer);
+            //FogBlur(m_cbuffer);
             Graphics.ExecuteCommandBuffer(m_cbuffer);
             m_cbuffer.Clear();
         }

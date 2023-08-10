@@ -23,7 +23,7 @@ public class MultiColorInstanced : MonoBehaviour
         {
             matrices[i] = Matrix4x4.TRS(startPosition + offset * i, Quaternion.identity, Vector3.one);
             colors[i] = new Vector4(Random.value, Random.value, Random.value, 1);
-            Debug.LogError(colors[i]);
+            //Debug.LogError(colors[i]);
         }
         propertyBlock.SetVectorArray("_BaseColor", colors);
     }

@@ -55,6 +55,14 @@ public class HexGrid : MonoBehaviour {
 		hexFogParam.FogLayer.Add(0,zeroLayer);
 		hexFogParam.FogLayer.Add(1,oneLayer);
 		hexFogParam.FogLayer.Add(2,twoLayer);
+		
+		hexFogParam.FogData.Add(zeroLayer);
+		hexFogParam.FogData.Add(oneLayer);
+		hexFogParam.FogData.Add(twoLayer);
+		
+		hexFogParam.FogDir.Add(new List<float>(){3.14f});
+		hexFogParam.FogDir.Add(new List<float>(){3.14f,3.14f});
+		hexFogParam.FogDir.Add(new List<float>(){3.14f,3.14f,3.14f});
 	}
 
 	void Start () {
@@ -92,11 +100,12 @@ public class HexGrid : MonoBehaviour {
 
 		if (GUI.Button(new Rect(130, 10, 120, 80), "渐变开启迷雾"))
 		{
-			List<float> dir = new List<float>();
-			for (int i = 0; i < 6; i++)
-			{
-				dir.Add(3.14f);
-			}
+			hexFogView.StartDrawHexFogAsync(hexFogParam,false);
+			// List<float> dir = new List<float>();
+			// for (int i = 0; i < 6; i++)
+			// {
+			// 	dir.Add(3.14f);
+			// }
 			//hexFogView.StartDrawHexFogAsync(hexFogParam,dir,false);
 		}
 
