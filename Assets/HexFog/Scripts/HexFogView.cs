@@ -178,7 +178,7 @@ namespace Elex.HexFog
             {
                 case 0: return Color.red;
                 case 1: return Color.green;
-                case 2: return Color.yellow;
+                case 2: return Color.blue;
                 // Add more cases as needed
                 default: return Color.white; // Default color
             }
