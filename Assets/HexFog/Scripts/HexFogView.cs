@@ -9,9 +9,32 @@ namespace Elex.HexFog
 {
     public class HexFogParam
     {
-        public Dictionary<int, List<Vector3>> FogLayer = new Dictionary<int, List<Vector3>>();
         public List<List<Vector3>> FogData=new List<List<Vector3>>();
         public List<List<float>> FogDir=new List<List<float>>();
+    }
+
+    //迷雾格子状态
+    enum FogGridStatus
+    {
+        None=-1,//未知，给目标状态使用
+        Lock=0,//初始状态，全黑，临时blue
+        Unlocking=1,//探索状态，迷雾叠加地表，临时Green
+        Unlocked=2,//拥有的状态，临时红色
+    }
+
+    class FogItem
+    {
+        public string key;
+        public FogGridStatus targetStatus=FogGridStatus.None;
+        public FogGridStatus srcStatus=FogGridStatus.Lock;
+    }
+
+    //组织每次绘制的数据
+    class HexFogDrawData
+    {
+       public List<Matrix4x4> matrixList = new List<Matrix4x4>();
+       public  List<float> dissolveList = new List<float>();
+       public  List<Vector4> colorList = new List<Vector4>();
     }
 
     public class HexFogView : MonoBehaviour
@@ -35,7 +58,7 @@ namespace Elex.HexFog
         private static readonly Quaternion viewQuaternion = Quaternion.Euler(90, 0, 0);
         private static readonly Vector3 viewScale = new Vector3(1, 1, -1);
 
-        private static readonly Color FogColor0 = Color.black;
+        private static readonly Color FogColor0 = Color.red;
         private static readonly Color FogColor1 = Color.green;
         private static readonly Color FogColor2 = Color.blue;
 
@@ -61,35 +84,11 @@ namespace Elex.HexFog
         private Vector3 m_projCenter;
         private Matrix4x4 m_viewMatrix;
         private CommandBuffer m_cbuffer;
-
-
         public RenderTexture forBlurRt;
-
-
         private MaterialPropertyBlock m_propertyBlock;
 
-        private Vector3[] hexPos = new Vector3[]
-        {
-            new Vector3(51.96f, 0, 0),
-            new Vector3(43.30f, 0, 15.00f),
-            new Vector3(60.62f, 0, 15.00f),
-            new Vector3(34.64f, 0, 30.00f),
-            new Vector3(51.96f, 0, 30.00f),
-            new Vector3(69.28f, 0, 30.00f),
-            // new Vector3(17.32f, 0.00f, 30.00f),
-            // new Vector3(34.64f, 0.00f, 30.00f),
-            // new Vector3(51.96f, 0.0f, 30.00f),
-            // new Vector3(69.28f, 0.00f, 30.00f),
-            // new Vector3(69.28f, 0.00f, 0.00f),
-            //
-            //
-            // new Vector3(86.60f, 0.00f, 0.00f),
-            // new Vector3(8.66f, 0.00f, 75.00f),
-            // new Vector3(25.98f, 0.00f, 75.00f),
-            // new Vector3(34.64f, 0.00f, 60.00f),
-            // new Vector3(25.98f, 0.00f, 45.00f),
-            // new Vector3(43.30f, 0.00f, 45.00f),
-        };
+        //迷雾全部的数据
+        private Dictionary<string, FogItem> fogItemDic = new Dictionary<string, FogItem>();
 
         void Start()
         {
@@ -138,39 +137,30 @@ namespace Elex.HexFog
                 Debug.LogError("fog rt is null");
                 return;
             }
-
+            fogItemDic.Clear();
             SetViewMatrix();
-
             float dissolve = open ? 0 : 1;
 
             List<Matrix4x4> matrixList = new List<Matrix4x4>();
             List<float> dissolveList = new List<float>();
             List<Vector4> colorList = new List<Vector4>();
-
-            foreach (var layer in hexFogParam.FogLayer)
+            for (int i=0;i<hexFogParam.FogData.Count;i++)
             {
-                var positions = layer.Value.ToArray();
+                var positions = hexFogParam.FogData[i].ToArray();
                 var matrices = Convert2Matrix(positions);
-                var color = GetColorForKey(layer.Key);
-
+                var color = GetColorForKey(i);
                 matrixList.AddRange(matrices);
-
-                for (int i = 0; i < matrices.Length; i++)
+                for (int j = 0; j < matrices.Length; j++)
                 {
                     dissolveList.Add(dissolve);
                     colorList.Add((Vector4) color);
                 }
             }
-
-            if (m_propertyBlock == null)
-            {
-                m_propertyBlock = new MaterialPropertyBlock();
-                m_propertyBlock.Clear();
-            }
-
+            m_propertyBlock ??= new MaterialPropertyBlock();
+            m_propertyBlock.Clear();
             m_propertyBlock.SetFloatArray("_Dissolve", dissolveList.ToArray());
             m_propertyBlock.SetVectorArray("_BaseColor", colorList.ToArray());
-            DrawHexMesh(matrixList.ToArray(), false, m_propertyBlock);
+            DrawHexMesh(matrixList.ToArray(), true, m_propertyBlock);
         }
 
         private Color GetColorForKey(int key)
@@ -179,9 +169,9 @@ namespace Elex.HexFog
             // For example:
             switch (key)
             {
-                case 0: return Color.red;
-                case 1: return Color.green;
-                case 2: return Color.blue;
+                case 0: return FogColor0;
+                case 1: return FogColor1;
+                case 2: return FogColor2;
                 // Add more cases as needed
                 default: return Color.white; // Default color
             }
@@ -189,21 +179,97 @@ namespace Elex.HexFog
 
         #endregion
 
+        private HexFogDrawData GetDrawData(HexFogParam hexFogParam, int paramType, List<float> dissolveParam)
+        {
+            HexFogDrawData drawData = new HexFogDrawData();
+
+            if (paramType == -1) // 获取全部数据
+            {
+                for (int i = 0; i < hexFogParam.FogData.Count; i++)
+                {
+                    ProcessFogData(hexFogParam.FogData[i], i, dissolveParam[i], drawData);
+                }
+            }
+            else if (paramType >= 0 && paramType < hexFogParam.FogData.Count) // 获取指定索引的数据
+            {
+                ProcessFogData(hexFogParam.FogData[paramType], paramType, dissolveParam[paramType], drawData);
+            }
+
+            m_propertyBlock ??= new MaterialPropertyBlock();
+            m_propertyBlock.Clear();
+
+            return drawData;
+        }
+
+        private void ProcessFogData(List<Vector3> positionsList, int index, float dissolveParam, HexFogDrawData drawData)
+        {
+            var positions = positionsList.ToArray();
+            var matrices = Convert2Matrix(positions);
+            var color = GetColorForKey(index);
+            drawData.matrixList.AddRange(matrices);
+            for (int j = 0; j < matrices.Length; j++)
+            {
+                drawData.dissolveList.Add(dissolveParam);
+                drawData.colorList.Add((Vector4)color);
+            }
+        }
+
+
         #region 渐变绘制
         
-        public async UniTask StartDrawHexFogAsync(HexFogParam hexFogParam, bool open)
+        public async UniTask StartDrawHexFogAsync(HexFogParam hexFogParam)
         {
             SetViewMatrix();
-            for (int i = 0; i < hexFogParam.FogData.Count; i++)
+            HexFogDrawData drawData = GetDrawData(hexFogParam,-1,new List<float>(){1,1});
+            var handler = DrawHexFogAsync(drawData).Start();
+            handler.OnComplete(stopped => OnCoroutineComplete(stopped, handler));
+            
+            // await UniTask.Delay(TimeSpan.FromSeconds(1), ignoreTimeScale: false);
+            //
+            // drawData = GetDrawData(hexFogParam,-1,new List<float>(){1,0});
+            // handler = DrawHexFogAsync(drawData).Start();
+            // handler.OnComplete(stopped => OnCoroutineComplete(stopped, handler));
+        }
+        
+        IEnumerator DrawHexFogAsync(HexFogDrawData hexFogDrawData)
+        {
+            if (fogRT == null)
             {
-                List<Vector3> posList = hexFogParam.FogData[i];
-                List<float> dirList = hexFogParam.FogDir[i];
-                StartDrawHexFogAsync(posList.ToArray(),dirList.ToArray(),open);
-                await UniTask.Delay(TimeSpan.FromSeconds(1), ignoreTimeScale: false); 
+                Debug.LogError("fog rt is null");
+                yield break;
+            }
+            var matrices = hexFogDrawData.matrixList.ToArray();
+            var dissolveBuffer = hexFogDrawData.dissolveList.ToArray();
+            var dissolveBufferUse = hexFogDrawData.dissolveList.ToArray();
+            var colorBuffer = hexFogDrawData.colorList.ToArray();
+            if (m_propertyBlock == null)
+            {
+                m_propertyBlock = new MaterialPropertyBlock();
+            }
+            m_propertyBlock.Clear();
+
+            float dissolveTime = 1.0f;
+            while (dissolveTime>0)
+            {
+                dissolveTime -= 0.1f;
+                for (int i = 0; i < dissolveBuffer.Length; i++)
+                {
+                    bool open = dissolveBuffer.Length >= i && dissolveBuffer[i] == 0f;
+                    float dissolveStep = open ? 0.1f : -0.1f;
+                    dissolveBufferUse[i] += dissolveStep;
+                    dissolveBufferUse[i] = Mathf.Clamp(dissolveBufferUse[i], 0f, 1f); // 确保溶解值在0到1之间
+                }
+                m_propertyBlock.SetFloatArray("_Dissolve", dissolveBufferUse);
+                m_propertyBlock.SetVectorArray("_BaseColor", colorBuffer);
+                DrawHexMesh(matrices, true, m_propertyBlock);
+                if (StopdrawHexAsync)
+                {
+                    yield break;
+                }
+                yield return new WaitForSeconds(disovleTime);
             }
         }
         
-
         private List<CoroutineHandler> runningCoroutines = new List<CoroutineHandler>();
         private bool StopdrawHexAsync;
 
@@ -246,7 +312,6 @@ namespace Elex.HexFog
             {
                 m_propertyBlock = new MaterialPropertyBlock();
             }
-
             m_propertyBlock.Clear();
 
             float dissolve = open ? 0f : 1.0f;
@@ -295,6 +360,21 @@ namespace Elex.HexFog
                 Debug.Log(content);
             }
         }
+        
+        public static string Vector3ToKey(Vector3 vector)
+        {
+            return string.Format("{0}_{1}_{2}", vector.x, vector.y, vector.z);
+            // 或使用插值字符串
+            // return $"{vector.x}_{vector.y}_{vector.z}";
+        }
+        public static int Vector3ToHash(Vector3 vector)
+        {
+            int hash = 17;
+            hash = hash * 23 + vector.x.GetHashCode();
+            hash = hash * 23 + vector.y.GetHashCode();
+            hash = hash * 23 + vector.z.GetHashCode();
+            return hash;
+        }
 
         //设置迷雾相机的矩阵
         private void SetViewMatrix()
@@ -309,7 +389,7 @@ namespace Elex.HexFog
             Graphics.SetRenderTarget(fogRT);
             if (clear)
             {
-                //m_cbuffer.ClearRenderTarget(true, true, FogColor2);
+                m_cbuffer.ClearRenderTarget(true, true, FogColor2);
             }
 
             m_cbuffer.SetViewProjectionMatrices(m_viewMatrix.inverse,

@@ -36,8 +36,11 @@ public class HexGrid : MonoBehaviour {
 				CreateCell(x, z, i++);
 			}
 		}
-		
-		hexFogParam = new HexFogParam();
+	}
+
+	private HexFogParam GetInitData()
+	{
+		HexFogParam data = new HexFogParam();
 
 		List<Vector3> zeroLayer = new List<Vector3>();
 		zeroLayer.Add(new Vector3(51.96f, 0, 0));
@@ -45,46 +48,96 @@ public class HexGrid : MonoBehaviour {
 		List<Vector3> oneLayer = new List<Vector3>();
 		oneLayer.Add( new Vector3(43.30f, 0, 15.00f));
 		oneLayer.Add( new Vector3(60.62f,0,15.00f));
-			
-		List<Vector3> twoLayer = new List<Vector3>();
-		twoLayer.Add(new Vector3(34.64f,0,30.00f));
-		twoLayer.Add(new Vector3(51.96f,0,30.00f));
-		twoLayer.Add(new Vector3(69.28f,0,30.00f));
+		data.FogData.Add(zeroLayer);
+		data.FogData.Add(oneLayer);
+		return data;
+	}
 
-		hexFogParam.FogLayer = new Dictionary<int, List<Vector3>>();
-		hexFogParam.FogLayer.Add(0,zeroLayer);
-		hexFogParam.FogLayer.Add(1,oneLayer);
-		hexFogParam.FogLayer.Add(2,twoLayer);
-		
-		hexFogParam.FogData.Add(zeroLayer);
-		hexFogParam.FogData.Add(oneLayer);
-		hexFogParam.FogData.Add(twoLayer);
-		
-		hexFogParam.FogDir.Add(new List<float>(){3.14f});
-		hexFogParam.FogDir.Add(new List<float>(){3.14f,3.14f});
-		hexFogParam.FogDir.Add(new List<float>(){3.14f,3.14f,3.14f});
+	private HexFogParam GetFirstData()
+	{
+		HexFogParam data = new HexFogParam();
+		List<Vector3> zeroLayer = new List<Vector3>();
+		zeroLayer.Add( new Vector3(43.30f, 0, 15.00f));
+
+		List<Vector3> oneLayer = new List<Vector3>();
+		oneLayer.Add(new Vector3(51.96f, 0, 0));
+		oneLayer.Add( new Vector3(60.62f,0,15.00f));
+		oneLayer.Add(new Vector3(34.64f,0,30.00f));
+
+		data.FogData.Add(zeroLayer);
+		data.FogData.Add(oneLayer);
+
+		return data;
+	}
+	
+	private HexFogParam GetSecondData()
+	{
+		HexFogParam data = new HexFogParam();
+		List<Vector3> zeroLayer = new List<Vector3>();
+		zeroLayer.Add(new Vector3(51.96f, 0, 0));
+
+		List<Vector3> oneLayer = new List<Vector3>();
+		oneLayer.Add( new Vector3(43.30f, 0, 15.00f));
+		oneLayer.Add( new Vector3(60.62f,0,15.00f));
+		oneLayer.Add(new Vector3(34.64f,0,30.00f));
+
+		data.FogData.Add(zeroLayer);
+		data.FogData.Add(oneLayer);
+
+		return data;
 	}
 
 	void Start () {
 		hexMesh.Triangulate(cells);
+		
+		hexFogParam = GetInitData();
+		hexFogView.DrawHexFogImmediately(hexFogParam,true);
 	}
 
 	void Update () {
-		return;
-		if (Input.GetMouseButtonDown(0)) {
-			//开启
-			Debug.LogError("开启迷雾");
-			HandleInput(true);
-		}
-		if (Input.GetMouseButtonDown(1)) {
-			//关闭
-			Debug.LogError("关闭迷雾");
-			HandleInput(false);
-		}
+		// if (Input.GetMouseButtonDown(0)) {
+		// 	//开启
+		// 	Debug.LogError("开启迷雾");
+		// 	HandleInput(true);
+		// }
+		// if (Input.GetMouseButtonDown(1)) {
+		// 	//关闭
+		// 	Debug.LogError("关闭迷雾");
+		// 	HandleInput(false);
+		// }
 	}
 
 	private void OnGUI()
 	{
+		if (GUI.Button(new Rect(10, 10, 120, 80), "移动一步"))
+		{
+			HexFogParam param = GetFirstData();
+			hexFogView.StartDrawHexFogAsync(param);
+		}
+
+		if (GUI.Button(new Rect(140, 10, 120, 80), "后退一步"))
+		{
+			HexFogParam param = GetSecondData();
+			hexFogView.StartDrawHexFogAsync(param);
+			// List<float> dir = new List<float>();
+			// for (int i = 0; i < 6; i++)
+			// {
+			// 	dir.Add(3.14f);
+			// }
+			//hexFogView.StartDrawHexFogAsync(hexFogParam,dir,false);
+		}
+		
+		if (GUI.Button(new Rect(270, 10, 120, 80), "重置"))
+		{
+			HexFogParam param = GetInitData();
+			hexFogView.DrawHexFogImmediately(param,true);
+			// List<float> dir = new List<float>();
+			// for (int i = 0; i < 6; i++)
+			// {
+			// 	dir.Add(3.14f);
+			// }
+			//hexFogView.StartDrawHexFogAsync(hexFogParam,dir,false);
+		}
 		/*
 		 *  new Vector3(51.96f, 0, 0),
             new Vector3(43.30f, 0, 15.00f),
@@ -93,6 +146,7 @@ public class HexGrid : MonoBehaviour {
             new Vector3(51.96f,0,30.00f),
             new Vector3(69.28f,0,30.00f),
 		 */
+		/*
 		if (GUI.Button(new Rect(10, 10, 120, 80), "立即绘制区域"))
 		{
 			hexFogView.DrawHexFogImmediately(hexFogParam,true);
@@ -117,7 +171,7 @@ public class HexGrid : MonoBehaviour {
 				dir.Add(3.14f);
 			}
 			//hexFogView.StartDrawHexFogAsync(hexFogParam,dir,true);
-		}
+		}*/
 	}
 
 	/*
@@ -164,7 +218,7 @@ public class HexGrid : MonoBehaviour {
 			TouchCell(hit.point,select,out cellPos);
 			List<Vector3> cellPosList = new List<Vector3>(){cellPos};
 			List<float> dirList = new List<float>() { dir};
-			hexFogView.StartDrawHexFogAsync(cellPosList.ToArray(),dirList.ToArray(),select);
+			//hexFogView.StartDrawHexFogAsync(cellPosList.ToArray(),dirList.ToArray(),select);
 		}
 	}
 
