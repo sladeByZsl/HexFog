@@ -55,7 +55,7 @@ Shader "hexmesh"
             float4 _BaseMap_ST;
             float4 _DissolveMap_ST;
             
-            float _Dissolve;
+           
             float _Direction;
             float _MaskUVScale;
 
@@ -92,6 +92,7 @@ Shader "hexmesh"
 
             UNITY_INSTANCING_BUFFER_START(Props)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColor)
+                UNITY_DEFINE_INSTANCED_PROP(float, _Dissolve)
             UNITY_INSTANCING_BUFFER_END(Props)
 
 
@@ -122,7 +123,8 @@ Shader "hexmesh"
                 uv = float2(uv.x * cos(_Direction) - uv.y * sin(_Direction), uv.x * sin(_Direction) + uv.y * cos(_Direction));
                 uv += 0.5;
                 float directionMask = SAMPLE_TEXTURE2D(_DirectionMap, sampler_DirectionMap, uv).r + .5;
-                float alpha = 1 * directionMask - mask.r - (_Dissolve * 1.5);
+                float dissolve= UNITY_ACCESS_INSTANCED_PROP(Props, _Dissolve);
+                float alpha = 1 * directionMask - mask.r - (dissolve * 1.5);
                 alpha = step(.2, alpha);
 
                 float4 baseColor = UNITY_ACCESS_INSTANCED_PROP(Props, _BaseColor);
