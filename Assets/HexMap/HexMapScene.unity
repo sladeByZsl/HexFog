@@ -288,11 +288,14 @@ MonoBehaviour:
   fogRTSize: {x: 256, y: 256}
   planeRender: {fileID: 86110799}
   disovleTime: 0.1
+  blurMaterial: {fileID: 2100000, guid: e288820d2c32d244286822b62842ded3, type: 2}
+  blurRadius: 0.01
   logEnable: 1
   fogWidth: 150
   fogHeight: 150
   m_visiblaRange: {x: 0, y: 0}
-  m_hexSize: 20
+  m_hexSize: 25
+  forBlurRt: {fileID: 0}
 --- !u!1001 &86110798
 PrefabInstance:
   m_ObjectHideFlags: 0
