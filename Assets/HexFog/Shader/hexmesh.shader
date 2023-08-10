@@ -54,7 +54,7 @@ Shader "hexmesh"
             CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
             float4 _DissolveMap_ST;
-            float4 _BaseColor;
+            
             float _Dissolve;
             float _Direction;
             float _MaskUVScale;
@@ -90,6 +90,11 @@ Shader "hexmesh"
             TEXTURE2D(_DirectionMap);
             SAMPLER(sampler_DirectionMap);
 
+            UNITY_INSTANCING_BUFFER_START(Props)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColor)
+            UNITY_INSTANCING_BUFFER_END(Props)
+
+
 
             v2f vert(appdata input)
             {
@@ -119,8 +124,13 @@ Shader "hexmesh"
                 float directionMask = SAMPLE_TEXTURE2D(_DirectionMap, sampler_DirectionMap, uv).r + .5;
                 float alpha = 1 * directionMask - mask.r - (_Dissolve * 1.5);
                 alpha = step(.2, alpha);
-                _BaseColor.a = alpha; // saturate(alpha);
-                return _BaseColor;
+
+                float4 baseColor = UNITY_ACCESS_INSTANCED_PROP(Props, _BaseColor);
+                baseColor.a = alpha;
+                return baseColor;
+                
+                //_BaseColor.a = alpha; // saturate(alpha);
+                //return _BaseColor;
             }
             ENDHLSL
         }

@@ -23,6 +23,8 @@ public class HexGrid : MonoBehaviour {
 
 	[FormerlySerializedAs("TestHexFog")] public HexFogView hexFogView;
 
+	private HexFogParam hexFogParam;
+
 	void Awake () {
 		gridCanvas = GetComponentInChildren<Canvas>();
 		hexMesh = GetComponentInChildren<HexMesh>();
@@ -34,6 +36,25 @@ public class HexGrid : MonoBehaviour {
 				CreateCell(x, z, i++);
 			}
 		}
+		
+		hexFogParam = new HexFogParam();
+
+		List<Vector3> zeroLayer = new List<Vector3>();
+		zeroLayer.Add(new Vector3(51.96f, 0, 0));
+
+		List<Vector3> oneLayer = new List<Vector3>();
+		oneLayer.Add( new Vector3(43.30f, 0, 15.00f));
+		oneLayer.Add( new Vector3(60.62f,0,15.00f));
+			
+		List<Vector3> twoLayer = new List<Vector3>();
+		twoLayer.Add(new Vector3(34.64f,0,30.00f));
+		twoLayer.Add(new Vector3(51.96f,0,30.00f));
+		twoLayer.Add(new Vector3(69.28f,0,30.00f));
+
+		hexFogParam.FogLayer = new Dictionary<int, List<Vector3>>();
+		hexFogParam.FogLayer.Add(0,zeroLayer);
+		hexFogParam.FogLayer.Add(1,oneLayer);
+		hexFogParam.FogLayer.Add(2,twoLayer);
 	}
 
 	void Start () {
@@ -66,26 +87,27 @@ public class HexGrid : MonoBehaviour {
 		 */
 		if (GUI.Button(new Rect(10, 10, 120, 80), "立即绘制区域"))
 		{
-			HexFogParam hexFogParam = new HexFogParam();
-
-			List<Vector3> zeroLayer = new List<Vector3>();
-			zeroLayer.Add(new Vector3(51.96f, 0, 0));
-
-			List<Vector3> oneLayer = new List<Vector3>();
-			oneLayer.Add( new Vector3(43.30f, 0, 15.00f));
-			oneLayer.Add( new Vector3(60.62f,0,15.00f));
-			
-			List<Vector3> twoLayer = new List<Vector3>();
-			twoLayer.Add(new Vector3(34.64f,0,30.00f));
-			twoLayer.Add(new Vector3(51.96f,0,30.00f));
-			twoLayer.Add(new Vector3(69.28f,0,30.00f));
-
-			hexFogParam.FogLayer = new Dictionary<int, List<Vector3>>();
-			hexFogParam.FogLayer.Add(0,zeroLayer);
-			hexFogParam.FogLayer.Add(1,oneLayer);
-			hexFogParam.FogLayer.Add(2,twoLayer);
-			
 			hexFogView.DrawHexFogImmediately(hexFogParam,true);
+		}
+
+		if (GUI.Button(new Rect(130, 10, 120, 80), "渐变开启迷雾"))
+		{
+			List<float> dir = new List<float>();
+			for (int i = 0; i < 6; i++)
+			{
+				dir.Add(3.14f);
+			}
+			//hexFogView.StartDrawHexFogAsync(hexFogParam,dir,false);
+		}
+
+		if (GUI.Button(new Rect(250, 10, 120, 80), "渐变结束迷雾"))
+		{
+			List<float> dir = new List<float>();
+			for (int i = 0; i < 6; i++)
+			{
+				dir.Add(3.14f);
+			}
+			//hexFogView.StartDrawHexFogAsync(hexFogParam,dir,true);
 		}
 	}
 
