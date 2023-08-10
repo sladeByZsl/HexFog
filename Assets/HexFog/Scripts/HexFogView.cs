@@ -8,9 +8,9 @@ namespace Elex.HexFog
 {
     public class HexFogParam
     {
-        public Dictionary<int, List<Vector3>> FogLayer=new Dictionary<int, List<Vector3>>();
+        public Dictionary<int, List<Vector3>> FogLayer = new Dictionary<int, List<Vector3>>();
     }
-    
+
     public class HexFogView : MonoBehaviour
     {
         [Header("六边形遮罩的mesh")] public Mesh hexMesh;
@@ -19,7 +19,8 @@ namespace Elex.HexFog
         [Header("迷雾RT的Size")] public Vector2Int fogRTSize = new Vector2Int(256, 256);
         [Header("地表")] public Renderer planeRender;
         [Header("迷雾溶解时间")] public float disovleTime = 0.1f;
-
+        [Header("模糊的材质球")] public Material blurMaterial;
+        [Header("模糊半径")] public float blurRadius;
         [Header("LogEnable")] public bool logEnable = true;
 
         //地表shader参数
@@ -57,16 +58,21 @@ namespace Elex.HexFog
         private Vector3 m_projCenter;
         private Matrix4x4 m_viewMatrix;
         private CommandBuffer m_cbuffer;
-        public MaterialPropertyBlock m_propertyBlock;
+
+
+        public RenderTexture forBlurRt;
+
+
+        private MaterialPropertyBlock m_propertyBlock;
 
         private Vector3[] hexPos = new Vector3[]
         {
             new Vector3(51.96f, 0, 0),
             new Vector3(43.30f, 0, 15.00f),
-            new Vector3(60.62f,0,15.00f),
-            new Vector3(34.64f,0,30.00f),
-            new Vector3(51.96f,0,30.00f),
-            new Vector3(69.28f,0,30.00f),
+            new Vector3(60.62f, 0, 15.00f),
+            new Vector3(34.64f, 0, 30.00f),
+            new Vector3(51.96f, 0, 30.00f),
+            new Vector3(69.28f, 0, 30.00f),
             // new Vector3(17.32f, 0.00f, 30.00f),
             // new Vector3(34.64f, 0.00f, 30.00f),
             // new Vector3(51.96f, 0.0f, 30.00f),
@@ -111,7 +117,7 @@ namespace Elex.HexFog
                 Matrix4x4[] mx = new Matrix4x4[positions.Length];
                 for (int i = 0; i < positions.Length; i++)
                 {
-                    mx[i] = Matrix4x4.TRS(positions[i], Quaternion.Euler(0,-90,0), Vector3.one * m_hexSize);
+                    mx[i] = Matrix4x4.TRS(positions[i], Quaternion.Euler(0, -90, 0), Vector3.one * m_hexSize);
                 }
 
                 return mx;
@@ -122,7 +128,6 @@ namespace Elex.HexFog
 
         #region 立刻绘制
 
-        
         public void DrawHexFogImmediately(HexFogParam hexFogParam, bool open)
         {
             if (fogRT == null)
@@ -146,11 +151,11 @@ namespace Elex.HexFog
                 var color = GetColorForKey(layer.Key);
 
                 matrixList.AddRange(matrices);
-                
+
                 for (int i = 0; i < matrices.Length; i++)
                 {
                     dissolveList.Add(dissolve);
-                    colorList.Add((Vector4)color);
+                    colorList.Add((Vector4) color);
                 }
             }
 
@@ -164,7 +169,7 @@ namespace Elex.HexFog
             m_propertyBlock.SetVectorArray("_BaseColor", colorList.ToArray());
             DrawHexMesh(matrixList.ToArray(), false, m_propertyBlock);
         }
-        
+
         private Color GetColorForKey(int key)
         {
             // You can define a mapping of keys to colors here
@@ -262,7 +267,7 @@ namespace Elex.HexFog
                 colorbuffer[i] = color;
             }
         }
-        
+
         #endregion
 
         #region 工具
@@ -303,8 +308,22 @@ namespace Elex.HexFog
                 m_cbuffer.DrawMeshInstanced(hexMesh, 0, fogMaterial, 0, matrices, matrices.Length);
             }
 
+            FogBlur(m_cbuffer);
             Graphics.ExecuteCommandBuffer(m_cbuffer);
             m_cbuffer.Clear();
+        }
+
+
+        void FogBlur(CommandBuffer cmd)
+        {
+          
+            if (forBlurRt == null)
+            {
+                forBlurRt = new RenderTexture(fogRT.descriptor);
+            }
+            blurMaterial.SetFloat("_BlurRadius",blurRadius);
+            cmd.Blit(fogRT, forBlurRt, blurMaterial);
+            cmd.Blit(forBlurRt, fogRT, blurMaterial);
         }
 
         #endregion
