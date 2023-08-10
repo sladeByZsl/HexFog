@@ -24,7 +24,7 @@ namespace Elex.HexFog
         [Header("LogEnable")] public bool logEnable = true;
 
         //地表shader参数
-        private static readonly int baseMap = Shader.PropertyToID("_BaseMap");
+        private static readonly int baseMap = Shader.PropertyToID("_FogMaskMap");
 
         #region 视野矩阵
 

@@ -19,7 +19,7 @@ Shader "hexmesh"
         {
             "RenderType" = "Transparent"
             "IgnoreProjector" = "True"
-            "QUEUE"="TRANSPARENT"
+            "QUEUE"="TRANSPARENT+100"
             "RenderPipeline" = "UniversalPipeline"
         }
         LOD 100
