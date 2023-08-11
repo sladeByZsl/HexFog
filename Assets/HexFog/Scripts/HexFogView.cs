@@ -87,6 +87,7 @@ namespace Elex.HexFog
         public RenderTexture forBlurRt;
         private MaterialPropertyBlock m_propertyBlock;
 
+        private static List<HexCell> gridCells=new List<HexCell>();
         //迷雾全部的数据
         private Dictionary<string, FogItem> fogItemDic = new Dictionary<string, FogItem>();
 
@@ -110,6 +111,11 @@ namespace Elex.HexFog
             viewLeft = -viewRight;
             viewTop = fogHeight * .5f;
             viewBottom = -viewTop;
+        }
+        
+        public static void RegisterCell(HexCell cell)
+        {
+            gridCells.Add(cell);
         }
 
         private Matrix4x4[] Convert2Matrix(Vector3[] positions)
@@ -423,5 +429,13 @@ namespace Elex.HexFog
         }
 
         #endregion
+
+        public void Update()
+        {
+            foreach (var cell in gridCells)
+            {
+                
+            }
+        }
     }
 }
