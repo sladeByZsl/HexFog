@@ -111,14 +111,25 @@ public class HexGrid : MonoBehaviour {
 	{
 		if (GUI.Button(new Rect(10, 10, 120, 80), "移动一步"))
 		{
-			HexFogParam param = GetFirstData();
-			hexFogView.StartDrawHexFogAsync(param);
+			HexFogView.cellList[7].fogItem.targetStatus = FogGridStatus.Unlocked;
+			HexFogView.cellList[6].fogItem.targetStatus = FogGridStatus.Unlocking;
+			HexFogView.cellList[1].fogItem.targetStatus = FogGridStatus.Unlocking;
+			HexFogView.cellList[13].fogItem.targetStatus = FogGridStatus.Unlocking;
+			// HexFogParam param = GetFirstData();
+			// hexFogView.StartDrawHexFogAsync(param);
 		}
 
 		if (GUI.Button(new Rect(140, 10, 120, 80), "后退一步"))
 		{
-			HexFogParam param = GetSecondData();
-			hexFogView.StartDrawHexFogAsync(param);
+			HexFogView.cellList[7].fogItem.targetStatus = FogGridStatus.Unlocking;
+			
+			// HexFogView.cellList[7].fogItem.targetStatus = FogGridStatus.Unlocked;
+			// HexFogView.cellList[6].fogItem.targetStatus = FogGridStatus.Unlocking;
+			// HexFogView.cellList[1].fogItem.targetStatus = FogGridStatus.Unlocking;
+			// HexFogView.cellList[13].fogItem.targetStatus = FogGridStatus.Unlocking;
+			
+			// HexFogParam param = GetSecondData();
+			// hexFogView.StartDrawHexFogAsync(param);
 			// List<float> dir = new List<float>();
 			// for (int i = 0; i < 6; i++)
 			// {
@@ -129,8 +140,27 @@ public class HexGrid : MonoBehaviour {
 		
 		if (GUI.Button(new Rect(270, 10, 120, 80), "重置"))
 		{
-			HexFogParam param = GetInitData();
-			hexFogView.DrawHexFogImmediately(param,true);
+			// HexFogParam param = GetInitData();
+			// hexFogView.DrawHexFogImmediately(param,true);
+			HexFogView.IsNeedClear = true;
+			List<int> unlocked = new List<int>() { 8,9};
+			List<int> unlocking = new List<int>() {2,3,4,7,10,14,15,16};
+
+			for(int i=0;i<HexFogView.cellList.Count;i++)
+			{
+				HexFogView.cellList[i].fogItem.srcStatus = FogGridStatus.Lock;
+				if (unlocked.Contains(i))
+				{
+					HexFogView.cellList[i].fogItem.srcStatus = FogGridStatus.Unlocked;
+				}
+				if (unlocking.Contains(i))
+				{
+					HexFogView.cellList[i].fogItem.srcStatus = FogGridStatus.Unlocking;
+				}
+				HexFogView.cellList[i].fogItem.targetStatus = FogGridStatus.None;
+			}
+			
+			
 			// List<float> dir = new List<float>();
 			// for (int i = 0; i < 6; i++)
 			// {

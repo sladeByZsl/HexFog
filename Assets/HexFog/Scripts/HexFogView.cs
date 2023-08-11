@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -14,7 +15,7 @@ namespace Elex.HexFog
     }
 
     //迷雾格子状态
-    enum FogGridStatus
+    public enum FogGridStatus
     {
         None=-1,//未知，给目标状态使用
         Lock=0,//初始状态，全黑，临时blue
@@ -22,19 +23,66 @@ namespace Elex.HexFog
         Unlocked=2,//拥有的状态，临时红色
     }
 
-    class FogItem
+    public class FogItem
     {
         public string key;
-        public FogGridStatus targetStatus=FogGridStatus.None;
+
+        public float currentTime;
+        public float targetTime;
+        private FogGridStatus _targetStatus;
+        public FogGridStatus targetStatus
+        {
+            get { return _targetStatus;}
+            set
+            {
+                _targetStatus = value;
+                if (targetStatus!=FogGridStatus.None)
+                {
+                    currentTime = Time.realtimeSinceStartup;
+                    targetTime = currentTime + 1.0f;
+                }
+                else
+                {
+                    currentTime = 0;
+                    targetTime = 0;
+                }
+            }
+        }
         public FogGridStatus srcStatus=FogGridStatus.Lock;
+        private float lastProgress = 0f; // 存储上一次的进度
+        public float GetProgress()
+        {
+            if (targetTime <= currentTime)
+            {
+                return 0f;
+            }
+
+            float elapsedTime = Time.realtimeSinceStartup - currentTime;
+            float totalTime = targetTime - currentTime;
+            float progress = elapsedTime / totalTime;
+            progress = Mathf.Clamp01(progress);
+
+            // 检查进度是否有显著变化
+            if (Mathf.Abs(progress - lastProgress) < 0.01f)
+            {
+                return lastProgress; // 如果变化不显著，则返回上一次的进度
+            }
+
+            lastProgress = progress; // 更新上一次的进度
+            return progress;
+        }
+
+
     }
 
     //组织每次绘制的数据
     class HexFogDrawData
     {
+        public List<Vector3> posList = new List<Vector3>();
        public List<Matrix4x4> matrixList = new List<Matrix4x4>();
        public  List<float> dissolveList = new List<float>();
        public  List<Vector4> colorList = new List<Vector4>();
+       public  List<Vector4> destColorList = new List<Vector4>();
     }
 
     public class HexFogView : MonoBehaviour
@@ -44,7 +92,7 @@ namespace Elex.HexFog
         [Header("迷雾RT")] public RenderTexture fogRT;
         [Header("迷雾RT的Size")] public Vector2Int fogRTSize = new Vector2Int(256, 256);
         [Header("地表")] public Renderer planeRender;
-        [Header("迷雾溶解时间")] public float disovleTime = 0.1f;
+        [Header("迷雾溶解时间")] public static float disovleTime = 0.1f;
         [Header("模糊的材质球")] public Material blurMaterial;
         [Header("模糊半径")] public float blurRadius;
         [Header("LogEnable")] public bool logEnable = true;
@@ -89,6 +137,19 @@ namespace Elex.HexFog
 
         //迷雾全部的数据
         private Dictionary<string, FogItem> fogItemDic = new Dictionary<string, FogItem>();
+        
+        public static List<HexCell> cellList=new List<HexCell>();
+        public static bool IsNeedClear = false;
+
+        /// <summary>
+        /// Each cell registers itself at startup using this function
+        /// I really wouldn't do it like this in a large game project but it is fine for a tutorial
+        /// </summary>
+        /// <param name="cell">The cell object to add to the list</param>
+        public static void RegisterCell(HexCell cell)
+        {
+            cellList.Add(cell);
+        }
 
         void Start()
         {
@@ -130,6 +191,11 @@ namespace Elex.HexFog
 
         #region 立刻绘制
 
+        public void DrawHexFogImmediately2(HexFogParam hexFogParam)
+        {
+            
+        }
+
         public void DrawHexFogImmediately(HexFogParam hexFogParam, bool open)
         {
             if (fogRT == null)
@@ -140,7 +206,6 @@ namespace Elex.HexFog
             fogItemDic.Clear();
             SetViewMatrix();
             float dissolve = open ? 0 : 1;
-
             List<Matrix4x4> matrixList = new List<Matrix4x4>();
             List<float> dissolveList = new List<float>();
             List<Vector4> colorList = new List<Vector4>();
@@ -177,6 +242,19 @@ namespace Elex.HexFog
             }
         }
 
+        private Color GetColorByStatus(FogGridStatus fogGridStatus)
+        {
+            // You can define a mapping of keys to colors here
+            // For example:
+            switch (fogGridStatus)
+            {
+                case FogGridStatus.Unlocked: return FogColor0;
+                case FogGridStatus.Unlocking: return FogColor1;
+                case FogGridStatus.Lock: return FogColor2;
+                // Add more cases as needed
+                default: return Color.white; // Default color
+            }
+        }
         #endregion
 
         private HexFogDrawData GetDrawData(HexFogParam hexFogParam, int paramType, List<float> dissolveParam)
@@ -351,6 +429,104 @@ namespace Elex.HexFog
 
         #endregion
 
+        public void Update()
+        {
+            HexFogDrawData hexFogDrawData = new HexFogDrawData();
+            foreach (var hexCell in cellList)
+            {
+                //position
+                //颜色值
+                //溶解值
+                //需要
+                var targetStatus = hexCell.fogItem.targetStatus;
+                var srcStatus = hexCell.fogItem.srcStatus;
+                if (targetStatus==FogGridStatus.None)
+                {
+                    if (srcStatus==FogGridStatus.Unlocked || srcStatus==FogGridStatus.Unlocking)
+                    {
+                        hexFogDrawData.posList.Add(hexCell.GetPos());
+                        hexFogDrawData.dissolveList.Add(1.0f);
+                        hexFogDrawData.colorList.Add(Color.white);
+                        hexFogDrawData.destColorList.Add(GetColorByStatus(srcStatus));
+                    }
+                }
+                else
+                {
+                    //存在目标状态，需要动画
+                    if (targetStatus==FogGridStatus.Unlocked || targetStatus==FogGridStatus.Unlocking)
+                    {
+                        hexFogDrawData.posList.Add(hexCell.GetPos());
+                        float process = hexCell.fogItem.GetProgress();
+                        if (process>=0.99f)
+                        {
+                            hexCell.fogItem.srcStatus = targetStatus;
+                            hexCell.fogItem.targetStatus = FogGridStatus.None;
+                            process = 1.0f;
+                        }
+                        hexFogDrawData.dissolveList.Add(process);
+                        hexFogDrawData.colorList.Add(GetColorByStatus(srcStatus));
+                        hexFogDrawData.destColorList.Add(GetColorByStatus(targetStatus));
+                        //Debug.LogError($"{process},{GetColorByStatus(srcStatus)},{GetColorByStatus(targetStatus)}");
+                    }
+                }
+            }
+
+            if (hexFogDrawData.posList.Count>0)
+            {
+                hexFogDrawData.matrixList = Convert2Matrix(hexFogDrawData.posList.ToArray()).ToList();
+                if (IsNeedClear)
+                {
+                    IsNeedClear = false;
+                    //渲染
+                    DrawHexFog2(hexFogDrawData,true);
+                }
+                else
+                {
+                    DrawHexFog2(hexFogDrawData,false);
+                }
+            }
+            else
+            {
+                ClearTarget();
+            }
+        }
+        
+        void DrawHexFog2(HexFogDrawData hexFogDrawData, bool clear)
+        {
+            if (fogRT == null)
+            {
+                Debug.LogError("fog rt is null");
+                return;
+            }
+            var matrices = hexFogDrawData.matrixList.ToArray();
+            var dissolveBuffer = hexFogDrawData.dissolveList.ToArray();
+            var colorBuffer = hexFogDrawData.colorList.ToArray();
+            var destColorBuffer = hexFogDrawData.destColorList.ToArray();
+            m_propertyBlock ??= new MaterialPropertyBlock();
+            m_propertyBlock.Clear();
+            
+            m_propertyBlock.SetFloatArray("_Dissolve", dissolveBuffer);
+            m_propertyBlock.SetVectorArray("_DestColor", destColorBuffer);
+            m_propertyBlock.SetVectorArray("_BaseColor", colorBuffer);
+            DrawHexMesh(matrices, clear, m_propertyBlock);
+        }
+        
+        /*
+         * private void ProcessFogData(List<Vector3> positionsList, int index, float dissolveParam, HexFogDrawData drawData)
+        {
+            var positions = positionsList.ToArray();
+            var matrices = Convert2Matrix(positions);
+            var color = GetColorForKey(index);
+            drawData.matrixList.AddRange(matrices);
+            for (int j = 0; j < matrices.Length; j++)
+            {
+                drawData.dissolveList.Add(dissolveParam);
+                drawData.colorList.Add((Vector4)color);
+            }
+        }
+         * 
+         */
+
         #region 工具
 
         private void Log(string content)
@@ -405,6 +581,14 @@ namespace Elex.HexFog
             }
 
             //FogBlur(m_cbuffer);
+            Graphics.ExecuteCommandBuffer(m_cbuffer);
+            m_cbuffer.Clear();
+        }
+
+        private void ClearTarget()
+        {
+            Graphics.SetRenderTarget(fogRT);
+            m_cbuffer.ClearRenderTarget(true, true, FogColor2);
             Graphics.ExecuteCommandBuffer(m_cbuffer);
             m_cbuffer.Clear();
         }

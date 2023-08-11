@@ -2,7 +2,8 @@ Shader "hexmesh"
 {
     Properties
     {
-        _BaseColor("Color",Color)=(1,1,1,1)
+        _SrcColor("_SrcColor",Color)=(1,1,1,1)
+        _DestColor("_DestColor",Color)=(1,1,1,1)
         _BaseMap ("Texture", 2D) = "white" {}
         _DissolveMap ("_DissolveMap", 2D) = "white" {}
         _DirectionMap("_DirectionMap", 2D) = "white" {}
@@ -10,7 +11,6 @@ Shader "hexmesh"
         _Dissolve(" _Dissolve",range(0,1))=1
         _Direction("_Direction",float)=0
         _MaskUVScale("_MaskScale",float)=1
-
     }
     SubShader
     {
@@ -22,8 +22,8 @@ Shader "hexmesh"
             "RenderPipeline" = "UniversalPipeline"
         }
         LOD 100
-        zwrite off
-        blend srcalpha oneminussrcalpha
+        //zwrite off
+        //blend srcalpha oneminussrcalpha
         Pass
         {
             HLSLPROGRAM
@@ -66,7 +66,7 @@ Shader "hexmesh"
 
             #ifdef UNITY_DOTS_INSTANCING_ENABLED
                 UNITY_DOTS_INSTANCING_START(MaterialPropertyMetadata)
-                    UNITY_DOTS_INSTANCED_PROP(float4, _BaseColor)
+                    UNITY_DOTS_INSTANCED_PROP(float4, _SrcColor)
                     UNITY_DOTS_INSTANCED_PROP(float , _Cutoff)
                     UNITY_DOTS_INSTANCED_PROP(float , _Dissolve)
                     UNITY_DOTS_INSTANCED_PROP(float , _Direction)
@@ -75,7 +75,7 @@ Shader "hexmesh"
             
                 UNITY_DOTS_INSTANCING_END(MaterialPropertyMetadata)
 
-                #define _BaseColor          UNITY_ACCESS_DOTS_INSTANCED_PROP_FROM_MACRO(float4 , Metadata_BaseColor)
+                #define _SrcColor          UNITY_ACCESS_DOTS_INSTANCED_PROP_FROM_MACRO(float4 , Metadata_BaseColor)
                 #define _Cutoff             UNITY_ACCESS_DOTS_INSTANCED_PROP_FROM_MACRO(float  , Metadata_Cutoff)
                 #define _Dissolve            UNITY_ACCESS_DOTS_INSTANCED_PROP_FROM_MACRO(float  , Metadata_Dissolve)
                 #define _Direction            UNITY_ACCESS_DOTS_INSTANCED_PROP_FROM_MACRO(float  , Metadata_Direction)
@@ -91,8 +91,9 @@ Shader "hexmesh"
             SAMPLER(sampler_DirectionMap);
 
             UNITY_INSTANCING_BUFFER_START(Props)
-                UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColor)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _SrcColor)
                 UNITY_DEFINE_INSTANCED_PROP(float, _Dissolve)
+              UNITY_DEFINE_INSTANCED_PROP(float4, _DestColor)
             UNITY_INSTANCING_BUFFER_END(Props)
 
 
@@ -127,13 +128,15 @@ Shader "hexmesh"
                 float alpha = 1 * directionMask - mask.r - (dissolve * 1.5);
                 alpha = step(.2, alpha);
 
-                float4 baseColor = UNITY_ACCESS_INSTANCED_PROP(Props, _BaseColor);
+                float4 baseColor = UNITY_ACCESS_INSTANCED_PROP(Props, _SrcColor);
+                float4 targetColor = UNITY_ACCESS_INSTANCED_PROP(Props, _DestColor);
              //   baseColor.a = alpha;
-                baseColor.a *=1-dissolve;
+                baseColor=lerp(baseColor,targetColor,dissolve);
+                //baseColor.a *=1-dissolve;
                 return baseColor;
                 
-                //_BaseColor.a = alpha; // saturate(alpha);
-                //return _BaseColor;
+                //_SrcColor.a = alpha; // saturate(alpha);
+                //return _SrcColor;
             }
             ENDHLSL
         }
