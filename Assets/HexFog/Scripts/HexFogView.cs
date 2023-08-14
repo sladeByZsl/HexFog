@@ -30,16 +30,18 @@ namespace Elex.HexFog
         public float currentTime;
         public float targetTime;
         private FogGridStatus _targetStatus;
+        public bool isDirty = false;
         public FogGridStatus targetStatus
         {
             get { return _targetStatus;}
             set
             {
+                isDirty = true;
                 _targetStatus = value;
                 if (targetStatus!=FogGridStatus.None)
                 {
                     currentTime = Time.realtimeSinceStartup;
-                    targetTime = currentTime + 1.0f;
+                    targetTime = currentTime + 2.0f;
                 }
                 else
                 {
@@ -83,6 +85,23 @@ namespace Elex.HexFog
        public  List<float> dissolveList = new List<float>();
        public  List<Vector4> colorList = new List<Vector4>();
        public  List<Vector4> destColorList = new List<Vector4>();
+       
+       public void SortByDestColor()
+       {
+           // 使用LINQ创建一个排序后的索引列表
+           var sortedIndices = destColorList
+               .Select((color, index) => new { color, index })
+               .OrderBy(item => (Color)item.color == Color.green ? 0 : 1) // 绿色在前，红色在后
+               .Select(item => item.index)
+               .ToList();
+
+           // 使用索引列表调整其他列表的顺序
+           posList = sortedIndices.Select(index => posList[index]).ToList();
+           matrixList = sortedIndices.Select(index => matrixList[index]).ToList();
+           dissolveList = sortedIndices.Select(index => dissolveList[index]).ToList();
+           colorList = sortedIndices.Select(index => colorList[index]).ToList();
+           destColorList = sortedIndices.Select(index => destColorList[index]).ToList();
+       }
     }
 
     public class HexFogView : MonoBehaviour
@@ -149,6 +168,11 @@ namespace Elex.HexFog
         public static void RegisterCell(HexCell cell)
         {
             cellList.Add(cell);
+        }
+
+        public static void ClearCell()
+        {
+            cellList.Clear();
         }
 
         void Start()
@@ -431,17 +455,36 @@ namespace Elex.HexFog
 
         public void Update()
         {
+            if (cellList==null||cellList.Count==0)
+            {
+                return;
+            }
+
+            bool isDirty = false;
+            foreach (var hexCell in cellList)
+            {
+                if (hexCell.fogItem.isDirty)
+                {
+                    isDirty = true;
+                }
+            }
+
+            if (isDirty==false)
+            {
+                return;
+            }
+
             HexFogDrawData hexFogDrawData = new HexFogDrawData();
             foreach (var hexCell in cellList)
             {
                 //position
                 //颜色值
                 //溶解值
-                //需要
                 var targetStatus = hexCell.fogItem.targetStatus;
                 var srcStatus = hexCell.fogItem.srcStatus;
                 if (targetStatus==FogGridStatus.None)
                 {
+                    hexCell.fogItem.isDirty = false;
                     if (srcStatus==FogGridStatus.Unlocked || srcStatus==FogGridStatus.Unlocking)
                     {
                         hexFogDrawData.posList.Add(hexCell.GetPos());
@@ -462,6 +505,7 @@ namespace Elex.HexFog
                             hexCell.fogItem.srcStatus = targetStatus;
                             hexCell.fogItem.targetStatus = FogGridStatus.None;
                             process = 1.0f;
+                            hexCell.fogItem.isDirty = false;
                         }
                         hexFogDrawData.dissolveList.Add(process);
                         hexFogDrawData.colorList.Add(GetColorByStatus(srcStatus));
@@ -474,6 +518,7 @@ namespace Elex.HexFog
             if (hexFogDrawData.posList.Count>0)
             {
                 hexFogDrawData.matrixList = Convert2Matrix(hexFogDrawData.posList.ToArray()).ToList();
+                hexFogDrawData.SortByDestColor();
                 if (IsNeedClear)
                 {
                     IsNeedClear = false;
