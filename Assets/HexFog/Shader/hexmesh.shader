@@ -22,8 +22,9 @@ Shader "hexmesh"
             "RenderPipeline" = "UniversalPipeline"
         }
         LOD 100
-        //zwrite off
-        //blend srcalpha oneminussrcalpha
+        zwrite off
+        colormask rgb
+        blend srcalpha oneminussrcalpha
         Pass
         {
             HLSLPROGRAM
@@ -40,6 +41,7 @@ Shader "hexmesh"
             {
                 float4 positionOS : POSITION;
                 float2 uv : TEXCOORD0;
+                float4 color:COLOR;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -47,6 +49,7 @@ Shader "hexmesh"
             {
                 float4 uv : TEXCOORD0;
                 float4 positionCS : SV_POSITION;
+                float4 color:COLOR;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -54,8 +57,8 @@ Shader "hexmesh"
             CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
             float4 _DissolveMap_ST;
-            
-           
+
+
             float _Direction;
             float _MaskUVScale;
 
@@ -91,11 +94,10 @@ Shader "hexmesh"
             SAMPLER(sampler_DirectionMap);
 
             UNITY_INSTANCING_BUFFER_START(Props)
-                UNITY_DEFINE_INSTANCED_PROP(float4, _SrcColor)
-                UNITY_DEFINE_INSTANCED_PROP(float, _Dissolve)
-              UNITY_DEFINE_INSTANCED_PROP(float4, _DestColor)
+            UNITY_DEFINE_INSTANCED_PROP(float4, _SrcColor)
+            UNITY_DEFINE_INSTANCED_PROP(float, _Dissolve)
+            UNITY_DEFINE_INSTANCED_PROP(float4, _DestColor)
             UNITY_INSTANCING_BUFFER_END(Props)
-
 
 
             v2f vert(appdata input)
@@ -107,7 +109,7 @@ Shader "hexmesh"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
                 VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
-
+                output.color = input.color;
                 output.positionCS = vertexInput.positionCS;
                 output.uv.xy = TRANSFORM_TEX(input.uv, _BaseMap);
                 output.uv.zw = TRANSFORM_TEX(input.uv, _DissolveMap);
@@ -123,18 +125,19 @@ Shader "hexmesh"
                 float2 uv = input.uv.xy - 0.5f;
                 uv = float2(uv.x * cos(_Direction) - uv.y * sin(_Direction), uv.x * sin(_Direction) + uv.y * cos(_Direction));
                 uv += 0.5;
-                float directionMask = SAMPLE_TEXTURE2D(_DirectionMap, sampler_DirectionMap, uv).r + .5;
-                float dissolve= UNITY_ACCESS_INSTANCED_PROP(Props, _Dissolve);
+                float directionMask = SAMPLE_TEXTURE2D(_DirectionMap, sampler_DirectionMap,  input.uv.xy).r;// + .5;
+                float dissolve = UNITY_ACCESS_INSTANCED_PROP(Props, _Dissolve);
                 float alpha = 1 * directionMask - mask.r - (dissolve * 1.5);
                 alpha = step(.2, alpha);
 
                 float4 baseColor = UNITY_ACCESS_INSTANCED_PROP(Props, _SrcColor);
                 float4 targetColor = UNITY_ACCESS_INSTANCED_PROP(Props, _DestColor);
-             //   baseColor.a = alpha;
-                baseColor=lerp(baseColor,targetColor,dissolve);
-                //baseColor.a *=1-dissolve;
+                //   baseColor.a = alpha;
+                baseColor = lerp(baseColor, targetColor, dissolve);
+              
+                baseColor.a= input.color.r;
                 return baseColor;
-                
+
                 //_SrcColor.a = alpha; // saturate(alpha);
                 //return _SrcColor;
             }

@@ -89,7 +89,7 @@ namespace Elex.HexFog
        public void SortByDestColor()
        {
            // 使用LINQ创建一个排序后的索引列表
-           var sortedIndices = destColorList
+           var sortedIndices = colorList
                .Select((color, index) => new { color, index })
                .OrderBy(item => (Color)item.color == Color.green ? 0 : 1) // 绿色在前，红色在后
                .Select(item => item.index)
@@ -488,9 +488,9 @@ namespace Elex.HexFog
                     if (srcStatus==FogGridStatus.Unlocked || srcStatus==FogGridStatus.Unlocking)
                     {
                         hexFogDrawData.posList.Add(hexCell.GetPos());
-                        hexFogDrawData.dissolveList.Add(1.0f);
-                        hexFogDrawData.colorList.Add(Color.white);
-                        hexFogDrawData.destColorList.Add(GetColorByStatus(srcStatus));
+                        hexFogDrawData.dissolveList.Add(0.0f);
+                        hexFogDrawData.colorList.Add(GetColorByStatus(srcStatus));
+                        hexFogDrawData.destColorList.Add(Color.white);
                     }
                 }
                 else
@@ -510,7 +510,7 @@ namespace Elex.HexFog
                         hexFogDrawData.dissolveList.Add(process);
                         hexFogDrawData.colorList.Add(GetColorByStatus(srcStatus));
                         hexFogDrawData.destColorList.Add(GetColorByStatus(targetStatus));
-                        //Debug.LogError($"{process},{GetColorByStatus(srcStatus)},{GetColorByStatus(targetStatus)}");
+                        Debug.LogError($"{process},{GetColorByStatus(srcStatus)},{GetColorByStatus(targetStatus)}");
                     }
                 }
             }
@@ -527,7 +527,7 @@ namespace Elex.HexFog
                 }
                 else
                 {
-                    DrawHexFog2(hexFogDrawData,false);
+                    DrawHexFog2(hexFogDrawData,true);
                 }
             }
             else
@@ -552,7 +552,7 @@ namespace Elex.HexFog
             
             m_propertyBlock.SetFloatArray("_Dissolve", dissolveBuffer);
             m_propertyBlock.SetVectorArray("_DestColor", destColorBuffer);
-            m_propertyBlock.SetVectorArray("_BaseColor", colorBuffer);
+            m_propertyBlock.SetVectorArray("_SrcColor", colorBuffer);
             DrawHexMesh(matrices, clear, m_propertyBlock);
         }
         

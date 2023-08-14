@@ -128,6 +128,7 @@ Shader "hexmesh"
                 // Fogmask.b = step(.01, Fogmask.g);
                 //
                 //
+                Fogmask.a=1;
                 return saturate(Fogmask);
             }
             ENDHLSL
