@@ -536,7 +536,7 @@ namespace Elex.HexFog
                             hexFogDrawData.srcColorList.Insert(0,srcColor);
                             hexFogDrawData.destColorList.Insert(0,destColor);
                         }
-                        Debug.LogError($"{process},{GetColorByStatus(srcStatus)},{GetColorByStatus(targetStatus)}");
+                        //Debug.LogError($"{process},{GetColorByStatus(srcStatus)},{GetColorByStatus(targetStatus)}");
                     }
                 }
             }
@@ -547,13 +547,13 @@ namespace Elex.HexFog
                 if (IsNeedClear)
                 {
                     IsNeedClear = false;
-                    hexFogDrawData.SortByColor(hexFogDrawData.srcColorList);
+                    //hexFogDrawData.SortByColor(hexFogDrawData.srcColorList);
                     //渲染
                     DrawHexFog2(hexFogDrawData,true);
                 }
                 else
                 {
-                    hexFogDrawData.SortByColor(hexFogDrawData.destColorList);
+                    //hexFogDrawData.SortByColor(hexFogDrawData.destColorList);
                     DrawHexFog2(hexFogDrawData,true);
                 }
             }
