@@ -83,13 +83,13 @@ namespace Elex.HexFog
         public List<Vector3> posList = new List<Vector3>();
        public List<Matrix4x4> matrixList = new List<Matrix4x4>();
        public  List<float> dissolveList = new List<float>();
-       public  List<Vector4> colorList = new List<Vector4>();
+       public  List<Vector4> srcColorList = new List<Vector4>();
        public  List<Vector4> destColorList = new List<Vector4>();
        
-       public void SortByDestColor()
+       public void SortByColor(List<Vector4> _sortColor)
        {
            // 使用LINQ创建一个排序后的索引列表
-           var sortedIndices = colorList
+           var sortedIndices = _sortColor
                .Select((color, index) => new { color, index })
                .OrderBy(item => (Color)item.color == Color.green ? 0 : 1) // 绿色在前，红色在后
                .Select(item => item.index)
@@ -99,9 +99,11 @@ namespace Elex.HexFog
            posList = sortedIndices.Select(index => posList[index]).ToList();
            matrixList = sortedIndices.Select(index => matrixList[index]).ToList();
            dissolveList = sortedIndices.Select(index => dissolveList[index]).ToList();
-           colorList = sortedIndices.Select(index => colorList[index]).ToList();
+           srcColorList = sortedIndices.Select(index => srcColorList[index]).ToList();
            destColorList = sortedIndices.Select(index => destColorList[index]).ToList();
        }
+       
+       
     }
 
     public class HexFogView : MonoBehaviour
@@ -312,7 +314,7 @@ namespace Elex.HexFog
             for (int j = 0; j < matrices.Length; j++)
             {
                 drawData.dissolveList.Add(dissolveParam);
-                drawData.colorList.Add((Vector4)color);
+                drawData.srcColorList.Add((Vector4)color);
             }
         }
 
@@ -343,7 +345,7 @@ namespace Elex.HexFog
             var matrices = hexFogDrawData.matrixList.ToArray();
             var dissolveBuffer = hexFogDrawData.dissolveList.ToArray();
             var dissolveBufferUse = hexFogDrawData.dissolveList.ToArray();
-            var colorBuffer = hexFogDrawData.colorList.ToArray();
+            var colorBuffer = hexFogDrawData.srcColorList.ToArray();
             if (m_propertyBlock == null)
             {
                 m_propertyBlock = new MaterialPropertyBlock();
@@ -485,12 +487,23 @@ namespace Elex.HexFog
                 if (targetStatus==FogGridStatus.None)
                 {
                     hexCell.fogItem.isDirty = false;
+                    Color srcColor = GetColorByStatus(srcStatus);
                     if (srcStatus==FogGridStatus.Unlocked || srcStatus==FogGridStatus.Unlocking)
                     {
-                        hexFogDrawData.posList.Add(hexCell.GetPos());
-                        hexFogDrawData.dissolveList.Add(0.0f);
-                        hexFogDrawData.colorList.Add(GetColorByStatus(srcStatus));
-                        hexFogDrawData.destColorList.Add(Color.white);
+                        if (srcColor == Color.red)
+                        {
+                            hexFogDrawData.posList.Add(hexCell.GetPos());
+                            hexFogDrawData.dissolveList.Add(0.0f);
+                            hexFogDrawData.srcColorList.Add(GetColorByStatus(srcStatus));
+                            hexFogDrawData.destColorList.Add(Color.white);
+                        }
+                        else
+                        {
+                            hexFogDrawData.posList.Insert(0,hexCell.GetPos());
+                            hexFogDrawData.dissolveList.Insert(0,0.0f);
+                            hexFogDrawData.srcColorList.Insert(0,GetColorByStatus(srcStatus));
+                            hexFogDrawData.destColorList.Insert(0,Color.white);
+                        }
                     }
                 }
                 else
@@ -498,7 +511,6 @@ namespace Elex.HexFog
                     //存在目标状态，需要动画
                     if (targetStatus==FogGridStatus.Unlocked || targetStatus==FogGridStatus.Unlocking)
                     {
-                        hexFogDrawData.posList.Add(hexCell.GetPos());
                         float process = hexCell.fogItem.GetProgress();
                         if (process>=0.99f)
                         {
@@ -507,26 +519,41 @@ namespace Elex.HexFog
                             process = 1.0f;
                             hexCell.fogItem.isDirty = false;
                         }
-                        hexFogDrawData.dissolveList.Add(process);
-                        hexFogDrawData.colorList.Add(GetColorByStatus(srcStatus));
-                        hexFogDrawData.destColorList.Add(GetColorByStatus(targetStatus));
+
+                        Color srcColor = GetColorByStatus(srcStatus);
+                        Color destColor = GetColorByStatus(targetStatus);
+                        if (srcColor==Color.red||destColor==Color.red)
+                        {
+                            hexFogDrawData.posList.Add(hexCell.GetPos());
+                            hexFogDrawData.dissolveList.Add(process);
+                            hexFogDrawData.srcColorList.Add(srcColor);
+                            hexFogDrawData.destColorList.Add(destColor);
+                        }
+                        else
+                        {
+                            hexFogDrawData.posList.Insert(0,hexCell.GetPos());
+                            hexFogDrawData.dissolveList.Insert(0,process);
+                            hexFogDrawData.srcColorList.Insert(0,srcColor);
+                            hexFogDrawData.destColorList.Insert(0,destColor);
+                        }
                         Debug.LogError($"{process},{GetColorByStatus(srcStatus)},{GetColorByStatus(targetStatus)}");
                     }
                 }
             }
-
             if (hexFogDrawData.posList.Count>0)
             {
                 hexFogDrawData.matrixList = Convert2Matrix(hexFogDrawData.posList.ToArray()).ToList();
-                hexFogDrawData.SortByDestColor();
+               
                 if (IsNeedClear)
                 {
                     IsNeedClear = false;
+                    hexFogDrawData.SortByColor(hexFogDrawData.srcColorList);
                     //渲染
                     DrawHexFog2(hexFogDrawData,true);
                 }
                 else
                 {
+                    hexFogDrawData.SortByColor(hexFogDrawData.destColorList);
                     DrawHexFog2(hexFogDrawData,true);
                 }
             }
@@ -545,7 +572,7 @@ namespace Elex.HexFog
             }
             var matrices = hexFogDrawData.matrixList.ToArray();
             var dissolveBuffer = hexFogDrawData.dissolveList.ToArray();
-            var colorBuffer = hexFogDrawData.colorList.ToArray();
+            var colorBuffer = hexFogDrawData.srcColorList.ToArray();
             var destColorBuffer = hexFogDrawData.destColorList.ToArray();
             m_propertyBlock ??= new MaterialPropertyBlock();
             m_propertyBlock.Clear();

@@ -282,12 +282,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec5997867bb03b24aa51e5efa926c58e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hexMesh: {fileID: -888404026515264504, guid: e340d38aad8811541bc684a032e2a422, type: 3}
+  hexMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
   fogMaterial: {fileID: 2100000, guid: d2ddf5cae16cc4d42aa9308a11e4f312, type: 2}
   fogRT: {fileID: 0}
   fogRTSize: {x: 256, y: 256}
   planeRender: {fileID: 86110799}
-  disovleTime: 0.1
   blurMaterial: {fileID: 2100000, guid: e288820d2c32d244286822b62842ded3, type: 2}
   blurRadius: 0.01
   logEnable: 1
