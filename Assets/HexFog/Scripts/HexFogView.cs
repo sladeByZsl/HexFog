@@ -27,8 +27,8 @@ namespace Elex.HexFog
     {
         public string key;
 
-        public float currentTime;
-        public float targetTime;
+        public float currentTime=0.0f;
+        public float targetTime=0.0f;
         private FogGridStatus _targetStatus;
         public bool isDirty = false;
 
@@ -37,20 +37,33 @@ namespace Elex.HexFog
             get { return _targetStatus; }
             set
             {
-                isDirty = true;
-                _targetStatus = value;
-                if (targetStatus != FogGridStatus.None)
-                {
-                    currentTime = Time.realtimeSinceStartup;
-                    targetTime = currentTime + HexFogView.Instance.disovleTime;
-                }
-                else
+                if (value == FogGridStatus.None)
                 {
                     currentTime = 0;
                     targetTime = 0;
                 }
+                else
+                {
+                    if (_targetStatus == FogGridStatus.None)
+                    {
+                        currentTime = Time.realtimeSinceStartup;
+                        targetTime = currentTime + HexFogView.Instance.disovleTime;
+                    }
+                    else
+                    {
+                        lastProgress = 0;
+                        srcStatus = _targetStatus;
+                        float previousProgress = GetProgress(); // 获取上一次的进度
+                        float remainingTime = (1-previousProgress) * HexFogView.Instance.disovleTime; // 计算剩余的时间
+                        currentTime = Time.realtimeSinceStartup-remainingTime;
+                        targetTime =  currentTime + HexFogView.Instance.disovleTime; // 使用剩余的时间来计算目标时间
+                    }
+                }
+                _targetStatus = value;
+                isDirty = true;
             }
         }
+
 
         public FogGridStatus srcStatus = FogGridStatus.Lock;
         private float lastProgress = 0f; // 存储上一次的进度
@@ -67,7 +80,7 @@ namespace Elex.HexFog
             float progress = elapsedTime / totalTime;
             progress = Mathf.Clamp01(progress);
 
-            // 检查进度是否有显著变化
+            //检查进度是否有显著变化
             if (Mathf.Abs(progress - lastProgress) < 0.01f)
             {
                 return lastProgress; // 如果变化不显著，则返回上一次的进度
@@ -77,6 +90,7 @@ namespace Elex.HexFog
             return progress;
         }
     }
+
 
     //组织每次绘制的数据
     class HexFogDrawData
@@ -364,7 +378,14 @@ namespace Elex.HexFog
         private void AddHexFogData(HexFogDrawData hexFogDrawData, Vector3 pos, float process, Color srcColor,
             Color destColor, bool isRed)
         {
-            //对颜色进行排序，先渲染绿色（第0层），绿色再渲染红色（第1层）
+            if (Math.Abs(pos.x - 17.32f) < 0.1f)
+            {
+                LogError($"{process}");
+                //
+            }
+            //LogError($"{pos},{process},{srcColor},{destColor}");
+            
+            //对颜色进行排序，先渲染绿色（第0层），再渲染红色（第1层）
             if (isRed)
             {
                 hexFogDrawData.posList.Add(pos);

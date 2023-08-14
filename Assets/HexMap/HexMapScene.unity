@@ -290,7 +290,7 @@ MonoBehaviour:
   disovleTime: 1.5
   blurMaterial: {fileID: 2100000, guid: e288820d2c32d244286822b62842ded3, type: 2}
   blurRadius: 0.01
-  logEnable: 1
+  logEnable: 0
   fogWidth: 150
   fogHeight: 150
   m_visiblaRange: {x: 0, y: 0}
