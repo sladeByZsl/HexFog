@@ -37,63 +37,9 @@ public class HexGrid : MonoBehaviour {
 			}
 		}
 	}
-
-	private HexFogParam GetInitData()
-	{
-		HexFogParam data = new HexFogParam();
-
-		List<Vector3> zeroLayer = new List<Vector3>();
-		zeroLayer.Add(new Vector3(51.96f, 0, 0));
-
-		List<Vector3> oneLayer = new List<Vector3>();
-		oneLayer.Add( new Vector3(43.30f, 0, 15.00f));
-		oneLayer.Add( new Vector3(60.62f,0,15.00f));
-		data.FogData.Add(zeroLayer);
-		data.FogData.Add(oneLayer);
-		return data;
-	}
-
-	private HexFogParam GetFirstData()
-	{
-		HexFogParam data = new HexFogParam();
-		List<Vector3> zeroLayer = new List<Vector3>();
-		zeroLayer.Add( new Vector3(43.30f, 0, 15.00f));
-
-		List<Vector3> oneLayer = new List<Vector3>();
-		oneLayer.Add(new Vector3(51.96f, 0, 0));
-		oneLayer.Add( new Vector3(60.62f,0,15.00f));
-		oneLayer.Add(new Vector3(34.64f,0,30.00f));
-
-		data.FogData.Add(zeroLayer);
-		data.FogData.Add(oneLayer);
-
-		return data;
-	}
-	
-	private HexFogParam GetSecondData()
-	{
-		HexFogParam data = new HexFogParam();
-		List<Vector3> zeroLayer = new List<Vector3>();
-		zeroLayer.Add(new Vector3(51.96f, 0, 0));
-
-		List<Vector3> oneLayer = new List<Vector3>();
-		oneLayer.Add( new Vector3(43.30f, 0, 15.00f));
-		oneLayer.Add( new Vector3(60.62f,0,15.00f));
-		oneLayer.Add(new Vector3(34.64f,0,30.00f));
-
-		data.FogData.Add(zeroLayer);
-		data.FogData.Add(oneLayer);
-
-		return data;
-	}
-
 	void Start () {
 		hexMesh.Triangulate(cells);
-		
-		hexFogParam = GetInitData();
-		hexFogView.DrawHexFogImmediately(hexFogParam,true);
 	}
-
 	void Update () {
 		// if (Input.GetMouseButtonDown(0)) {
 		// 	//开启
@@ -115,33 +61,15 @@ public class HexGrid : MonoBehaviour {
 			HexFogView.cellList[6].fogItem.targetStatus = FogGridStatus.Unlocking;
 			HexFogView.cellList[1].fogItem.targetStatus = FogGridStatus.Unlocking;
 			HexFogView.cellList[13].fogItem.targetStatus = FogGridStatus.Unlocking;
-			// HexFogParam param = GetFirstData();
-			// hexFogView.StartDrawHexFogAsync(param);
 		}
 
 		if (GUI.Button(new Rect(140, 10, 120, 80), "后退一步"))
 		{
 			HexFogView.cellList[7].fogItem.targetStatus = FogGridStatus.Unlocking;
-			
-			// HexFogView.cellList[7].fogItem.targetStatus = FogGridStatus.Unlocked;
-			// HexFogView.cellList[6].fogItem.targetStatus = FogGridStatus.Unlocking;
-			// HexFogView.cellList[1].fogItem.targetStatus = FogGridStatus.Unlocking;
-			// HexFogView.cellList[13].fogItem.targetStatus = FogGridStatus.Unlocking;
-			
-			// HexFogParam param = GetSecondData();
-			// hexFogView.StartDrawHexFogAsync(param);
-			// List<float> dir = new List<float>();
-			// for (int i = 0; i < 6; i++)
-			// {
-			// 	dir.Add(3.14f);
-			// }
-			//hexFogView.StartDrawHexFogAsync(hexFogParam,dir,false);
 		}
 		
 		if (GUI.Button(new Rect(270, 10, 120, 80), "重置"))
 		{
-			// HexFogParam param = GetInitData();
-			// hexFogView.DrawHexFogImmediately(param,true);
 			HexFogView.IsNeedClear = true;
 			List<int> unlocked = new List<int>() { 8,9};
 			List<int> unlocking = new List<int>() {2,3,4,7,10,14,15,16};
@@ -159,86 +87,9 @@ public class HexGrid : MonoBehaviour {
 				}
 				HexFogView.cellList[i].fogItem.targetStatus = FogGridStatus.None;
 			}
-			
-			
-			// List<float> dir = new List<float>();
-			// for (int i = 0; i < 6; i++)
-			// {
-			// 	dir.Add(3.14f);
-			// }
-			//hexFogView.StartDrawHexFogAsync(hexFogParam,dir,false);
 		}
-		/*
-		 *  new Vector3(51.96f, 0, 0),
-            new Vector3(43.30f, 0, 15.00f),
-            new Vector3(60.62f,0,15.00f),
-            new Vector3(34.64f,0,30.00f),
-            new Vector3(51.96f,0,30.00f),
-            new Vector3(69.28f,0,30.00f),
-		 */
-		/*
-		if (GUI.Button(new Rect(10, 10, 120, 80), "立即绘制区域"))
-		{
-			hexFogView.DrawHexFogImmediately(hexFogParam,true);
-		}
-
-		if (GUI.Button(new Rect(130, 10, 120, 80), "渐变开启迷雾"))
-		{
-			hexFogView.StartDrawHexFogAsync(hexFogParam,false);
-			// List<float> dir = new List<float>();
-			// for (int i = 0; i < 6; i++)
-			// {
-			// 	dir.Add(3.14f);
-			// }
-			//hexFogView.StartDrawHexFogAsync(hexFogParam,dir,false);
-		}
-
-		if (GUI.Button(new Rect(250, 10, 120, 80), "渐变结束迷雾"))
-		{
-			List<float> dir = new List<float>();
-			for (int i = 0; i < 6; i++)
-			{
-				dir.Add(3.14f);
-			}
-			//hexFogView.StartDrawHexFogAsync(hexFogParam,dir,true);
-		}*/
 	}
-
-	/*
-	 * private void OnGUI()
-    {
-        if (GUI.Button(new Rect(10, 10, 120, 80), "Blit"))
-        {
-            //Debug.LogError(m_cam.worldToCameraMatrix);
-            Debug.LogError(m_viewMatrix.inverse);
-            DrawHexImmediately(hexPos,true);
-        }
-
-        if (GUI.Button(new Rect(130, 10, 120, 80), "渐变开启迷雾"))
-        {
-            List<float> dir = new List<float>();
-            for (int i = 0; i < hexPos.Length; i++)
-            {
-                dir.Add(3.14f);
-            }
-
-            DrawHexAync2(hexPos, dir.ToArray(),false);
-        }
-        
-        if (GUI.Button(new Rect(250, 10, 120, 80), "渐变结束迷雾"))
-        {
-            List<float> dir = new List<float>();
-            for (int i = 0; i < hexPos.Length; i++)
-            {
-                dir.Add(3.14f);
-            }
-
-            DrawHexAync2(hexPos, dir.ToArray(),true);
-        }
-    }
-	 * 
-	 */
-
+	
 	void HandleInput (bool select) {
 		Vector3 cellPos = Vector3.zero;
 		Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
