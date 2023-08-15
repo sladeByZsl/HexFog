@@ -287,7 +287,7 @@ MonoBehaviour:
   fogRT: {fileID: 0}
   fogRTSize: {x: 256, y: 256}
   planeRender: {fileID: 86110799}
-  disovleTime: 0.1
+  disovleTime: 1
   blurMaterial: {fileID: 2100000, guid: e288820d2c32d244286822b62842ded3, type: 2}
   blurRadius: 0.01
   logEnable: 1
