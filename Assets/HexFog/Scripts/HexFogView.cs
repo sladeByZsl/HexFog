@@ -182,6 +182,10 @@ namespace Elex.HexFog
 
         private static HexFogView _instance;
 
+        
+        
+        
+        public Renderer box;
         public static HexFogView Instance
         {
             get
@@ -227,7 +231,7 @@ namespace Elex.HexFog
 
             planeRender.sharedMaterial.SetTexture(baseMap, fogRT);
             m_cbuffer.name = HexFogCbufferName;
-
+            box.sharedMaterial.SetTexture("_FogMask", fogRT);
             //设置迷雾相机尺寸
             viewRight = fogWidth * .5f;
             viewLeft = -viewRight;
