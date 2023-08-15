@@ -3,7 +3,9 @@ Shader "hexmesh"
     Properties
     {
         _BaseColor("Color",Color)=(1,1,1,1)
-        _BaseMap ("Texture", 2D) = "white" {}
+        _Layer0 ("_Layer0", 2D) = "white" {}
+        _Layer1 ("_Layer1", 2D) = "white" {}
+
         _FogMaskMap ("_FogMaskMap", 2D) = "white" {}
         _DissolveMap ("_DissolveMap", 2D) = "white" {}
 
@@ -46,14 +48,17 @@ Shader "hexmesh"
 
             struct v2f
             {
-                float4 uv : TEXCOORD0;
+                float4 uv0 : TEXCOORD0;
+                float4 uv1 : TEXCOORD1;
+                float4 uv2 : TEXCOORD2;
                 float4 positionCS : SV_POSITION;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
 
             CBUFFER_START(UnityPerMaterial)
-            float4 _BaseMap_ST;
+            float4 _Layer0_ST;
+            float4 _Layer1_ST;
             float4 _DissolveMap_ST;
             float4 _FogMaskMap_ST;
             float _Direction;
@@ -83,8 +88,12 @@ Shader "hexmesh"
             #endif
 
 
-            TEXTURE2D(_BaseMap);
-            SAMPLER(sampler_BaseMap);
+            TEXTURE2D(_Layer0);
+            SAMPLER(sampler_Layer0);
+            TEXTURE2D(_Layer1);
+            SAMPLER(sampler_Layer1);
+
+
             TEXTURE2D(_DissolveMap);
             SAMPLER(sampler_DissolveMap);
             TEXTURE2D(_FogMaskMap);
@@ -107,8 +116,13 @@ Shader "hexmesh"
                 VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
 
                 output.positionCS = vertexInput.positionCS;
-                output.uv.xy = TRANSFORM_TEX(input.uv, _BaseMap);
-                output.uv.zw = TRANSFORM_TEX(input.uv, _DissolveMap);
+                output.uv0.xy = TRANSFORM_TEX(input.uv, _FogMaskMap);
+                output.uv0.zw = TRANSFORM_TEX(input.uv, _DissolveMap);
+
+
+                output.uv1.xy = TRANSFORM_TEX(input.uv, _Layer0);
+                output.uv1.zw = TRANSFORM_TEX(input.uv, _Layer1);
+                output.uv2.xy = TRANSFORM_TEX(input.uv, _FogMaskMap);
 
                 return output;
             }
@@ -117,19 +131,30 @@ Shader "hexmesh"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
 
-                half4 mask = SAMPLE_TEXTURE2D(_DissolveMap, sampler_DissolveMap, input.uv.zw);
-                half4 Fogmask = SAMPLE_TEXTURE2D(_FogMaskMap, sampler_FogMaskMap, input.uv.xy);
 
-                // Fogmask.r -= mask.r * 2;
-                // Fogmask.r = step(.01, Fogmask.r);
-                // Fogmask.g -= mask.r * 2;
-                // Fogmask.g = step(.01, Fogmask.g);
-                // Fogmask.b -= mask.r * 2;
-                // Fogmask.b = step(.01, Fogmask.g);
-                //
-                //
-                Fogmask.a=1;
-                return saturate(Fogmask);
+                float3 layer0 = SAMPLE_TEXTURE2D(_Layer0, sampler_Layer0, input.uv1.xy).rgb;
+                float3 layer1 = SAMPLE_TEXTURE2D(_Layer1, sampler_Layer1, input.uv1.zw).rgb;
+
+
+                half4 fogmask = SAMPLE_TEXTURE2D(_FogMaskMap, sampler_FogMaskMap, input.uv0.xy);
+                half4 dissolve = SAMPLE_TEXTURE2D(_DissolveMap, sampler_DissolveMap, input.uv0.zw/2);
+
+
+
+                fogmask.g = fogmask.g * 2 - dissolve.r;
+                fogmask.g = step(.01, fogmask.g);
+                fogmask.b = saturate(fogmask.b - fogmask.g);
+
+                float v = max(fogmask.b, fogmask.g);
+                float3 layer = layer0 * fogmask.b + layer1 * fogmask.g;
+                layer *= 1 - fogmask.r;
+
+
+                fogmask.a = 1 - (fogmask.r * 2 - dissolve.r + .1) * 5;
+                fogmask.a = step(0.1, fogmask.a);
+
+                fogmask.rgb = layer;
+                return fogmask;
             }
             ENDHLSL
         }

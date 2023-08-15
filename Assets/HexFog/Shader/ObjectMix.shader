@@ -1,19 +1,20 @@
-Shader "Unlit/NewUnlitShader"
+Shader "ObjectMix"
 {
     Properties
     {
         _BaseMap ("Texture", 2D) = "white" {}
-        _Step ("Texture", float) = 0
+        _FogMask("Texture", 2D) = "white" {}
+        _Offset("offset",vector)=(1,1,1,1)
     }
     SubShader
     {
         Tags
         {
-            "RenderType" = "Opaque" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" "Queue"="Transparent"
+            "RenderType" = "Opaque" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" "QUEUE"="transparent+500"
         }
         LOD 100
-
-        Blend SrcAlpha OneMinusSrcAlpha
+        ZTest always
+        //Blend SrcAlpha OneMinusSrcAlpha
         ZWrite off
         Pass
         {
@@ -36,60 +37,48 @@ Shader "Unlit/NewUnlitShader"
                 float2 uv : TEXCOORD0;
                 float fogCoord : TEXCOORD1;
                 float4 positionCS : SV_POSITION;
+                float3 positionWS:TEXCOORD2;
             };
 
 
             CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
             half4 _BaseColor;
-            half _Cutoff;
-            half _Surface;
-            half _Step;
+            float4 _Offset;
             CBUFFER_END
 
 
             TEXTURE2D(_BaseMap);
             SAMPLER(sampler_BaseMap);
 
+            TEXTURE2D(_FogMask);
+            SAMPLER(sampler_FogMask);
 
-            const float3 n[6] = {
-                float3(0, 1, -1),
-                float3(1, 0, -1),
-                float3(-1, 1, 0),
-                float3(1, -1, 0),
-                float3(-1, 0, 1),
-                float3(0, -1, 1),
-            };
 
             Varyings UnlitPassVertex(Attributes input)
             {
                 Varyings output = (Varyings)0;
                 VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
                 output.positionCS = vertexInput.positionCS;
+                output.positionWS = vertexInput.positionWS;
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 return output;
             }
 
-            half4 UnlitPassFragment(Varyings input) : SV_Target
+            float4 UnlitPassFragment(Varyings input) : SV_Target
             {
                 half2 uv = input.uv;
                 half4 texColor = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv);
                 half mindis = 1;
 
 
-                half disc = distance(input.uv.xy, half2(0.5, 0.5));
-                for (int i = 0; i < 6; i++)
-                {
-                    half2 pos = half2(0.5 + 0.5 * 1.73205080756887 * (n[i].x + n[i].z * .5f), 0.5 + 0.5 * 1.5 * n[i].z);
-                    half a = distance(input.uv.xy, pos);
-                    mindis = min(mindis, a);
-                }
-                half e = step(disc , mindis);
+                float2 foguv = input.positionWS.xz - _Offset.xz;
 
+                foguv /= 200;
+                half4 fog = SAMPLE_TEXTURE2D(_FogMask, sampler_FogMask, foguv);
+                fog.a = 1;
 
-               texColor.a = e;
-
-                return texColor;
+                return fog;
             }
             ENDHLSL
         }
