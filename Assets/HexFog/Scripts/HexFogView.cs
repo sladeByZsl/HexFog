@@ -27,8 +27,8 @@ namespace Elex.HexFog
     {
         public string key;
 
-        public float currentTime=0.0f;
-        public float targetTime=0.0f;
+        public float currentTime = 0.0f;
+        public float targetTime = 0.0f;
         private FogGridStatus _targetStatus;
         public bool isDirty = false;
 
@@ -54,11 +54,12 @@ namespace Elex.HexFog
                         lastProgress = 0;
                         srcStatus = _targetStatus;
                         float previousProgress = GetProgress(); // 获取上一次的进度
-                        float remainingTime = (1-previousProgress) * HexFogView.Instance.disovleTime; // 计算剩余的时间
-                        currentTime = Time.realtimeSinceStartup-remainingTime;
-                        targetTime =  currentTime + HexFogView.Instance.disovleTime; // 使用剩余的时间来计算目标时间
+                        float remainingTime = (1 - previousProgress) * HexFogView.Instance.disovleTime; // 计算剩余的时间
+                        currentTime = Time.realtimeSinceStartup - remainingTime;
+                        targetTime = currentTime + HexFogView.Instance.disovleTime; // 使用剩余的时间来计算目标时间
                     }
                 }
+
                 _targetStatus = value;
                 isDirty = true;
             }
@@ -105,8 +106,8 @@ namespace Elex.HexFog
         {
             // 使用LINQ创建一个排序后的索引列表
             var sortedIndices = _sortColor
-                .Select((color, index) => new { color, index })
-                .OrderBy(item => (Color)item.color == Color.green ? 0 : 1) // 绿色在前，红色在后
+                .Select((color, index) => new {color, index})
+                .OrderBy(item => (Color) item.color == Color.green ? 0 : 1) // 绿色在前，红色在后
                 .Select(item => item.index)
                 .ToList();
 
@@ -123,11 +124,14 @@ namespace Elex.HexFog
     {
         [Header("六边形遮罩的mesh")] public Mesh hexMesh;
         [Header("迷雾的材质球")] public Material fogMaterial;
-        [Header("迷雾RT")] public RenderTexture fogRT;
+        [Header("迷雾colomaskRT")] public RenderTexture fogRT;
+        [Header("迷雾layermixRT")] public RenderTexture fogLayerMixRT;
         [Header("迷雾RT的Size")] public Vector2Int fogRTSize = new Vector2Int(256, 256);
         [Header("地表")] public Renderer planeRender;
+
         [Header("迷雾溶解时间")] public float disovleTime = 0.1f;
-        [Header("模糊的材质球")] public Material blurMaterial;
+
+        //   [Header("模糊的材质球")] public Material blurMaterial;
         [Header("模糊半径")] public float blurRadius;
         [Header("LogEnable")] public bool logEnable = true;
 
@@ -170,8 +174,10 @@ namespace Elex.HexFog
         public float m_hexSize;
         private Vector3 m_projCenter;
         private Matrix4x4 m_viewMatrix;
+
         private CommandBuffer m_cbuffer;
-        public RenderTexture forBlurRt;
+
+        //   public RenderTexture forBlurRt;
         private MaterialPropertyBlock m_propertyBlock;
 
         //迷雾全部的数据
@@ -182,10 +188,9 @@ namespace Elex.HexFog
 
         private static HexFogView _instance;
 
-        
-        
-        
+
         public Renderer box;
+
         public static HexFogView Instance
         {
             get
@@ -227,11 +232,12 @@ namespace Elex.HexFog
             if (fogRT == null)
             {
                 fogRT = new RenderTexture(fogRTSize.x, fogRTSize.y, 0, RenderTextureFormat.ARGB32);
+                fogLayerMixRT = RenderTexture.GetTemporary(fogRT.descriptor);
             }
 
             planeRender.sharedMaterial.SetTexture(baseMap, fogRT);
             m_cbuffer.name = HexFogCbufferName;
-            box.sharedMaterial.SetTexture("_FogMask", fogRT);
+            box.sharedMaterial.SetTexture("_FogMask", fogLayerMixRT);
             //设置迷雾相机尺寸
             viewRight = fogWidth * .5f;
             viewLeft = -viewRight;
@@ -388,7 +394,7 @@ namespace Elex.HexFog
                 //
             }
             //LogError($"{pos},{process},{srcColor},{destColor}");
-            
+
             //对颜色进行排序，先渲染绿色（第0层），再渲染红色（第1层）
             if (isRed)
             {
@@ -466,6 +472,7 @@ namespace Elex.HexFog
                 m_cbuffer.DrawMeshInstanced(hexMesh, 0, fogMaterial, 0, matrices, matrices.Length);
             }
 
+            FogMix(m_cbuffer);
             //FogBlur(m_cbuffer);
             Graphics.ExecuteCommandBuffer(m_cbuffer);
             m_cbuffer.Clear();
@@ -479,17 +486,30 @@ namespace Elex.HexFog
             m_cbuffer.Clear();
         }
 
-        void FogBlur(CommandBuffer cmd)
+        void FogMix(CommandBuffer cmd)
         {
-            if (forBlurRt == null)
-            {
-                forBlurRt = new RenderTexture(fogRT.descriptor);
-            }
+            // if (fogLayerMixRT == null)
+            // {
+            //     fogLayerMixRT = new RenderTexture(fogRT.descriptor);
+            // }
 
-            blurMaterial.SetFloat("_BlurRadius", blurRadius);
-            cmd.Blit(fogRT, forBlurRt, blurMaterial);
-            cmd.Blit(forBlurRt, fogRT, blurMaterial);
+            fogMaterial.SetTexture("_FogMaskMap", fogRT);
+            cmd.Blit(fogRT, fogLayerMixRT, fogMaterial, 1);
+            // cmd.Blit(forBlurRt, fogRT, blurMaterial);
         }
+
+
+        // void FogBlur(CommandBuffer cmd)
+        // {
+        //     if (forBlurRt == null)
+        //     {
+        //         forBlurRt = new RenderTexture(fogRT.descriptor);
+        //     }
+        //
+        //     blurMaterial.SetFloat("_BlurRadius", blurRadius);
+        //     cmd.Blit(fogRT, forBlurRt, blurMaterial);
+        //     cmd.Blit(forBlurRt, fogRT, blurMaterial);
+        // }
 
         #endregion
     }

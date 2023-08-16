@@ -2,8 +2,8 @@ Shader "ObjectMix"
 {
     Properties
     {
-        _BaseMap ("Texture", 2D) = "white" {}
-        _FogMask("Texture", 2D) = "white" {}
+        _BaseMap ("basetex", 2D) = "white" {}
+        _FogMask("_FogMask", 2D) = "white" {}
         _Offset("offset",vector)=(1,1,1,1)
     }
     SubShader
@@ -13,7 +13,7 @@ Shader "ObjectMix"
             "RenderType" = "Opaque" "IgnoreProjector" = "True" "RenderPipeline" = "UniversalPipeline" "QUEUE"="transparent+500"
         }
         LOD 100
-        ZTest always
+       // ZTest always
         //Blend SrcAlpha OneMinusSrcAlpha
         ZWrite off
         Pass
@@ -76,9 +76,12 @@ Shader "ObjectMix"
 
                 foguv /= 200;
                 half4 fog = SAMPLE_TEXTURE2D(_FogMask, sampler_FogMask, foguv);
-                fog.a = 1;
+                // fog.a = 1;
 
-                return fog;
+                float4 final;
+                final.rgb = lerp(texColor, fog.rgb, fog.a);
+                final.a=1;
+                return final;
             }
             ENDHLSL
         }

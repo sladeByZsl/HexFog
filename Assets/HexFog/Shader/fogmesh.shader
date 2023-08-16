@@ -25,10 +25,11 @@ Shader "hexmesh"
             "RenderPipeline" = "UniversalPipeline"
         }
         LOD 100
-        zwrite off
-        blend srcalpha oneminussrcalpha
+
         Pass
         {
+            zwrite off
+            blend srcalpha oneminussrcalpha
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -140,19 +141,18 @@ Shader "hexmesh"
                 half4 dissolve = SAMPLE_TEXTURE2D(_DissolveMap, sampler_DissolveMap, input.uv0.zw/2);
 
 
-
                 fogmask.g = fogmask.g * 2 - dissolve.r;
                 fogmask.g = step(.01, fogmask.g);
                 fogmask.b = saturate(fogmask.b - fogmask.g);
-
+               
                 float v = max(fogmask.b, fogmask.g);
                 float3 layer = layer0 * fogmask.b + layer1 * fogmask.g;
-                layer *= 1 - fogmask.r;
-
-
+               // layer *= 1 - fogmask.r;
+               
+               
                 fogmask.a = 1 - (fogmask.r * 2 - dissolve.r + .1) * 5;
                 fogmask.a = step(0.1, fogmask.a);
-
+               
                 fogmask.rgb = layer;
                 return fogmask;
             }
