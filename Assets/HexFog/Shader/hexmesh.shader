@@ -180,30 +180,21 @@ Shader "hexmesh"
             float4 frag(v2f input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-
-
                 float3 layer0 = SAMPLE_TEXTURE2D(_Layer0, sampler_Layer0, input.uv1.xy).rgb;
                 float3 layer1 = SAMPLE_TEXTURE2D(_Layer1, sampler_Layer1, input.uv1.zw).rgb;
 
 
                 half4 fogmask = SAMPLE_TEXTURE2D(_FogMaskMap, sampler_FogMaskMap, input.uv0.xy);
-                half4 dissolve = SAMPLE_TEXTURE2D(_DissolveMap, sampler_DissolveMap, input.uv0.zw/2);
-                
-                
+                half4 dissolve = SAMPLE_TEXTURE2D(_DissolveMap, sampler_DissolveMap, input.uv0.zw);
+
                 fogmask.g = fogmask.g * 2 - dissolve.r;
                 fogmask.g = step(.01, fogmask.g);
                 fogmask.b = saturate(fogmask.b - fogmask.g);
                 
-              
                 float3 layer = layer0 * fogmask.b + layer1 * fogmask.g;
-                layer *= 1 - fogmask.r;
-                
-                
                 fogmask.a = 1 - (fogmask.r * 2 - dissolve.r + .1) * 5;
                 fogmask.a = step(0.1, fogmask.a);
-                
                 fogmask.rgb = layer;
-
                 return fogmask;
             }
             ENDHLSL
