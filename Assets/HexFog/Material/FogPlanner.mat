@@ -29,7 +29,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _DissolveMap:
         m_Texture: {fileID: 2800000, guid: 86d098adfa26f8c43b033d7bdfc0d571, type: 3}
-        m_Scale: {x: 10, y: 10}
+        m_Scale: {x: 15, y: 15}
         m_Offset: {x: 0, y: 0}
     - _FogMaskMap:
         m_Texture: {fileID: 0}
