@@ -17,7 +17,7 @@ public class HexCell : MonoBehaviour {
 			targetStatus = FogGridStatus.None,
 			srcStatus = FogGridStatus.Lock
 		};
-		HexFogView.RegisterCell(this);
+		HexFogView.RegisterCell(coordinates.GetHexId(),this);
 	}
 
 	public Vector3 GetPos()

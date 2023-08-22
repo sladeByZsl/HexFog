@@ -170,6 +170,7 @@ namespace Elex.HexFog
         #endregion
 
         private const string HexFogCbufferName = "DrawFog";
+        [HideInInspector]
         public Vector2 m_visiblaRange;
         public float m_hexSize;
         private Vector3 m_projCenter;
@@ -183,12 +184,12 @@ namespace Elex.HexFog
         //迷雾全部的数据
         private Dictionary<string, FogItem> fogItemDic = new Dictionary<string, FogItem>();
 
-        public static List<HexCell> cellList = new List<HexCell>();
+        public static Dictionary<int,HexCell> cellList = new Dictionary<int,HexCell>();
         public static bool IsNeedClear = false;
 
         private static HexFogView _instance;
 
-
+        [HideInInspector]
         public Renderer box;
 
         public static HexFogView Instance
@@ -246,9 +247,9 @@ namespace Elex.HexFog
             SetViewMatrix();
         }
 
-        public static void RegisterCell(HexCell cell)
+        public static void RegisterCell(int id,HexCell cell)
         {
-            cellList.Add(cell);
+            cellList.Add(id,cell);
         }
 
         public static void ClearCell()
@@ -319,7 +320,7 @@ namespace Elex.HexFog
 
         private bool IsAnyCellDirty()
         {
-            foreach (var hexCell in cellList)
+            foreach (var (id,hexCell) in cellList)
             {
                 if (hexCell.fogItem.isDirty)
                 {
@@ -333,7 +334,7 @@ namespace Elex.HexFog
         private HexFogDrawData ProcessCells()
         {
             HexFogDrawData hexFogDrawData = new HexFogDrawData();
-            foreach (var hexCell in cellList)
+            foreach (var (id,hexCell) in cellList)
             {
                 ProcessHexCell(hexCell, hexFogDrawData);
             }
