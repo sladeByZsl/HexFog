@@ -389,11 +389,10 @@ namespace Elex.HexFog
         private void AddHexFogData(HexFogDrawData hexFogDrawData, Vector3 pos, float process, Color srcColor,
             Color destColor, bool isRed)
         {
-            if (Math.Abs(pos.x - 17.32f) < 0.1f)
-            {
-                LogError($"{process}");
-                //
-            }
+            // if (Math.Abs(pos.x - 17.32f) < 0.1f)
+            // {
+            //     LogError($"{process}");
+            // }
             //LogError($"{pos},{process},{srcColor},{destColor}");
 
             //对颜色进行排序，先渲染绿色（第0层），再渲染红色（第1层）

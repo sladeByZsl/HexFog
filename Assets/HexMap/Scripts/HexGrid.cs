@@ -57,35 +57,35 @@ public class HexGrid : MonoBehaviour {
 	{
 		if (GUI.Button(new Rect(10, 10, 120, 80), "移动一步"))
 		{
-			HexFogView.cellList[7].fogItem.targetStatus = FogGridStatus.Unlocked;
-			HexFogView.cellList[6].fogItem.targetStatus = FogGridStatus.Unlocking;
-			HexFogView.cellList[1].fogItem.targetStatus = FogGridStatus.Unlocking;
-			HexFogView.cellList[13].fogItem.targetStatus = FogGridStatus.Unlocking;
+			HexFogView.cellList[8100].fogItem.targetStatus = FogGridStatus.Unlocked;
+			HexFogView.cellList[-900].fogItem.targetStatus = FogGridStatus.Unlocking;
+			HexFogView.cellList[9000].fogItem.targetStatus = FogGridStatus.Unlocking;
+			HexFogView.cellList[-1800].fogItem.targetStatus = FogGridStatus.Unlocking;
 		}
 
 		if (GUI.Button(new Rect(140, 10, 120, 80), "后退一步"))
 		{
-			HexFogView.cellList[7].fogItem.targetStatus = FogGridStatus.Unlocking;
+			HexFogView.cellList[8100].fogItem.targetStatus = FogGridStatus.Unlocking;
 		}
 		
 		if (GUI.Button(new Rect(270, 10, 120, 80), "重置"))
 		{
 			HexFogView.IsNeedClear = true;
-			List<int> unlocked = new List<int>() { 8,9};
-			List<int> unlocking = new List<int>() {2,3,4,7,10,14,15,16};
+			List<int> unlocked = new List<int>() { 17100,26100};
+			List<int> unlocking = new List<int>() {18000,27000,36000,8100,35100,7200,16200,25200};
 
-			for(int i=0;i<HexFogView.cellList.Count;i++)
+			foreach (var (id,hexCell) in HexFogView.cellList)
 			{
-				HexFogView.cellList[i].fogItem.srcStatus = FogGridStatus.Lock;
-				if (unlocked.Contains(i))
+				hexCell.fogItem.srcStatus = FogGridStatus.Lock;
+				if (unlocked.Contains(id))
 				{
-					HexFogView.cellList[i].fogItem.srcStatus = FogGridStatus.Unlocked;
+					hexCell.fogItem.srcStatus = FogGridStatus.Unlocked;
 				}
-				if (unlocking.Contains(i))
+				if (unlocking.Contains(id))
 				{
-					HexFogView.cellList[i].fogItem.srcStatus = FogGridStatus.Unlocking;
+					hexCell.fogItem.srcStatus = FogGridStatus.Unlocking;
 				}
-				HexFogView.cellList[i].fogItem.targetStatus = FogGridStatus.None;
+				hexCell.fogItem.targetStatus = FogGridStatus.None;
 			}
 		}
 	}
@@ -128,7 +128,7 @@ public class HexGrid : MonoBehaviour {
 		cell.transform.localPosition = position;
 		cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
 		cell.color = defaultColor;
-		cell.gameObject.name = $"{i}_{cell.coordinates}";
+		cell.gameObject.name = $"{i}_{cell.coordinates}_{cell.coordinates.GetHexId()}";
 
 		Text label = Instantiate<Text>(cellLabelPrefab);
 		label.rectTransform.SetParent(gridCanvas.transform, false);
