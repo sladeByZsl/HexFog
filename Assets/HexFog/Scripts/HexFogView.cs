@@ -475,6 +475,7 @@ namespace Elex.HexFog
             FogMix(m_cbuffer);
             //FogBlur(m_cbuffer);
             Graphics.ExecuteCommandBuffer(m_cbuffer);
+            
             m_cbuffer.Clear();
         }
 
