@@ -1,4 +1,4 @@
-Shader "hexmesh"
+Shader "fogmesh"
 {
     Properties
     {

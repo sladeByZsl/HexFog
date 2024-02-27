@@ -126,7 +126,7 @@ namespace Elex.HexFog
         [Header("迷雾的材质球")] public Material fogMaterial;
         [Header("迷雾colomaskRT")] public RenderTexture fogRT;
         [Header("迷雾layermixRT")] public RenderTexture fogLayerMixRT;
-        [Header("迷雾RT的Size")] public Vector2Int fogRTSize = new Vector2Int(256, 256);
+        [Header("迷雾RT的Size")] public Vector2Int fogRTSize = new Vector2Int(2048, 2048);
         [Header("地表")] public Renderer planeRender;
 
         [Header("迷雾溶解时间")] public float disovleTime = 0.1f;
@@ -136,7 +136,7 @@ namespace Elex.HexFog
         [Header("LogEnable")] public bool logEnable = true;
 
         //地表shader参数
-        private static readonly int baseMap = Shader.PropertyToID("_FogMaskMap");
+        private static readonly int maskMap = Shader.PropertyToID("_FogMaskMap");
 
         //迷雾shader参数
         int dissolveId = Shader.PropertyToID("_Dissolve");
@@ -236,9 +236,9 @@ namespace Elex.HexFog
                 fogLayerMixRT = RenderTexture.GetTemporary(fogRT.descriptor);
             }
 
-            planeRender.sharedMaterial.SetTexture(baseMap, fogRT);
+            planeRender.sharedMaterial.SetTexture(maskMap, fogRT);
             m_cbuffer.name = HexFogCbufferName;
-            box.sharedMaterial.SetTexture("_FogMask", fogLayerMixRT);
+            //box.sharedMaterial.SetTexture("_FogMask", fogLayerMixRT);
             //设置迷雾相机尺寸
             viewRight = fogWidth * .5f;
             viewLeft = -viewRight;
@@ -472,7 +472,7 @@ namespace Elex.HexFog
                 m_cbuffer.DrawMeshInstanced(hexMesh, 0, fogMaterial, 0, matrices, matrices.Length);
             }
 
-            FogMix(m_cbuffer);
+            //FogMix(m_cbuffer);
             //FogBlur(m_cbuffer);
             Graphics.ExecuteCommandBuffer(m_cbuffer);
             
